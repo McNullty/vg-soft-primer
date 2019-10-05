@@ -1,5 +1,7 @@
 package hr.vgsoft.primer.test.example;
 
+import hr.vgsoft.primer.test.example.TestCoverageExample;
+
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
