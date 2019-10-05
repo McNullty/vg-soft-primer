@@ -6,6 +6,8 @@ plugins {
     id("org.asciidoctor.convert") version "1.5.8"
 }
 
+apply(from = "../gradle/integrationTest.gradle.kts")
+
 group = "hr.vgsoft"
 
 java {
@@ -22,21 +24,6 @@ configurations {
 repositories {
     mavenCentral()
 }
-
-// Integration test configuration
-sourceSets {
-    create("integrationTest") {
-        compileClasspath += sourceSets.main.get().output
-        runtimeClasspath += sourceSets.main.get().output
-    }
-}
-
-val integrationTestImplementation: Configuration by configurations.getting {
-    extendsFrom(configurations.implementation.get())
-}
-
-configurations["integrationTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
-// Integration test configuration end
 
 idea {
     module {
@@ -55,25 +42,12 @@ dependencies {
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor ("org.projectlombok:lombok")
     testImplementation ("org.springframework.boot:spring-boot-starter-test")
-    integrationTestImplementation ("org.springframework.boot:spring-boot-starter-test")
     testImplementation ("org.springframework.restdocs:spring-restdocs-mockmvc")
 }
 
 tasks.test {
     outputs.dir(snippetsDir)
 }
-
-val integrationTestTask = task<Test>("integrationTest") {
-    description = "Runs the integration tests"
-    group = "verification"
-
-    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
-    classpath = sourceSets["integrationTest"].runtimeClasspath
-
-    shouldRunAfter("test")
-
-}
-tasks.check { dependsOn(integrationTestTask) }
 
 tasks.asciidoctor {
     inputs.dir(snippetsDir)
