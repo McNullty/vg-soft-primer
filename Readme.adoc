@@ -1,0 +1,9 @@
+= Documenting VG Soft Primer
+
+== Introduction
+This project shows best practices for developing software project with Spring Boot as backend technology and ELM for frontend.
+
+== Testing
+
+Integration tests are configured as described in https://docs.gradle.org/current/userguide/java_testing.html#sec:configuring_java_integration_tests
+
