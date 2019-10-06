@@ -1,3 +1,7 @@
+import org.gradle.plugins.ide.idea.model.IdeaModel
+
+apply(plugin = "idea")
+
 val sourceSets = the<SourceSetContainer>()
 
 sourceSets {
@@ -28,3 +32,11 @@ val integrationTestTask = task<Test>("integrationTest") {
 
 }
 tasks.named("check") { dependsOn(integrationTestTask) }
+
+extensions.configure<IdeaModel> {
+    module {
+        testSourceDirs = testSourceDirs + sourceSets["integrationTest"].java.srcDirs
+        testResourceDirs = testResourceDirs + sourceSets["integrationTest"].resources.srcDirs
+        scopes["TEST"]!!["plus"]!!.add(configurations["integrationTestCompile"])
+    }
+}

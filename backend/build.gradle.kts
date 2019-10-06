@@ -1,6 +1,5 @@
 plugins {
     java
-    idea
     id("org.springframework.boot") version "2.1.9.RELEASE"
     id("io.spring.dependency-management") version "1.0.8.RELEASE"
     id("org.asciidoctor.convert") version "1.5.8"
@@ -24,14 +23,6 @@ configurations {
 
 repositories {
     mavenCentral()
-}
-
-idea {
-    module {
-        testSourceDirs = testSourceDirs + sourceSets["integrationTest"].java.srcDirs
-        testResourceDirs = testResourceDirs + sourceSets["integrationTest"].resources.srcDirs
-        scopes["TEST"]!!["plus"]!!.add(configurations["integrationTestCompile"])
-    }
 }
 
 val snippetsDir = file("build/generated-snippets")
