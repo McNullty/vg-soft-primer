@@ -1,7 +1,12 @@
-apply( plugin = "jacoco")
+apply(plugin = "jacoco")
 
 val sourceSets = the<SourceSetContainer>()
 
+// Example how to configure plugin
+//extensions.configure<JacocoPluginExtension> {
+//    println(toolVersion)
+//    toolVersion = "0.8.4"
+//}
 
 tasks.named<JacocoReport>("jacocoTestReport") {
     reports {
