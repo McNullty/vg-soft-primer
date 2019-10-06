@@ -1,12 +1,13 @@
 plugins {
     java
+    checkstyle
     id("org.springframework.boot") version "2.1.9.RELEASE"
     id("io.spring.dependency-management") version "1.0.8.RELEASE"
     id("org.asciidoctor.convert") version "1.5.8"
 }
 
 apply(from = "../gradle/integrationTest.gradle.kts")
-apply(from = "../gradle/jacoco.gradle.kts")
+//apply(from = "../gradle/jacoco.gradle.kts")
 
 group = "hr.vgsoft"
 
@@ -44,5 +45,16 @@ tasks.test {
 tasks.asciidoctor {
     inputs.dir(snippetsDir)
     dependsOn(tasks.test)
+}
+
+configure<CheckstyleExtension> {
+    toolVersion = "8.25"
+}
+
+tasks.withType<Checkstyle>().configureEach {
+    reports {
+        xml.isEnabled = false
+        html.isEnabled = true
+    }
 }
 

@@ -28,3 +28,7 @@ Reports can be created by running :
 ```bash
 $ ./gradlew clean jacocoIntegrationTestReport jacocoTestReport jacocoUnitTestReport
 ```
+
+== Checkstyle
+We have taken checkstyle configuration from https://github.com/checkstyle/checkstyle/raw/master/src/main/resources/google_checks.xml
+
