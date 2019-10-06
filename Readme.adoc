@@ -17,3 +17,9 @@ Eg.
 ```bash
 $ ./gradlew wrapper --gradle-version 5.6.2
 ```
+
+== Code coverage
+
+Check task only depends on `jacocoTestCoverageVerification`. This is to speed up build. Reports are created only when explicitly asked.
+
+Developer will be interested in jacoco reports only when build is failing because if low coverage or when he is interested in code coverage.
