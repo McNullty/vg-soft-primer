@@ -32,3 +32,5 @@ $ ./gradlew clean jacocoIntegrationTestReport jacocoTestReport jacocoUnitTestRep
 == Checkstyle
 We have taken checkstyle configuration from https://github.com/checkstyle/checkstyle/raw/master/src/main/resources/google_checks.xml
 
+== Pro Tip
+First configure plugin in build.gradle.kts and then look for types that will IntelliJ show and then muve them to separate file.
