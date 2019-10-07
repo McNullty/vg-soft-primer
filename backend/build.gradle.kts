@@ -2,6 +2,7 @@ import com.github.spotbugs.SpotBugsTask
 
 plugins {
     java
+    pmd
     id("org.springframework.boot") version "2.1.9.RELEASE"
     id("io.spring.dependency-management") version "1.0.8.RELEASE"
     id("org.asciidoctor.convert") version "1.5.8"
@@ -59,4 +60,16 @@ spotbugs {
 tasks.withType<SpotBugsTask> {
     reports.xml.isEnabled = false
     reports.html.isEnabled = true
+}
+
+configure<PmdExtension> {
+    toolVersion = "6.18.0"
+    isIgnoreFailures = true
+}
+
+tasks.withType<Pmd> {
+    reports {
+        xml.isEnabled = false
+        html.isEnabled = true
+    }
 }
