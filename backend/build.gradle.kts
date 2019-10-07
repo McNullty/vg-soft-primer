@@ -1,8 +1,12 @@
+import com.github.spotbugs.SpotBugsTask
+
 plugins {
     java
     id("org.springframework.boot") version "2.1.9.RELEASE"
     id("io.spring.dependency-management") version "1.0.8.RELEASE"
     id("org.asciidoctor.convert") version "1.5.8"
+
+    id("com.github.spotbugs") version "2.0.0"
 }
 
 apply(from = "../gradle/integrationTest.gradle.kts")
@@ -45,4 +49,14 @@ tasks.test {
 tasks.asciidoctor {
     inputs.dir(snippetsDir)
     dependsOn(tasks.test)
+}
+
+spotbugs {
+    toolVersion = "4.0.0-beta4"
+    isIgnoreFailures = true
+}
+
+tasks.withType<SpotBugsTask> {
+    reports.xml.isEnabled = false
+    reports.html.isEnabled = true
 }
