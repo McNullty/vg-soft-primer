@@ -1,5 +1,4 @@
 import com.github.spotbugs.SpotBugsTask
-import info.solidsoft.gradle.pitest.PitestPluginExtension
 
 plugins {
     java
