@@ -8,14 +8,15 @@ tasks.register<Exec>("elmMake") {
     commandLine = listOf("elm", "make", "$projectDir/src/Main.elm", "--output", jsPath )
 }
 
+tasks.register<Delete>("clean") {
+    delete.add("elm/elm-stuff/0.19.0")
+    delete.add("elm/elm-stuff/generated-code")
+    delete.add("build")
+}
 
-//project(":backend") {
-//    tasks.named("processResources") {
-//        dependsOn(":frontend:elmMake")
-////        tasks.register<Copy>("copyFrontend") {
-////            from(tasks.getByPath(":frontend:elmMake").outputs)
-////            into("public")
-////        }
-//
-//    }
-//}
+
+project(":backend") {
+    tasks.named("processResources") {
+        dependsOn(":frontend:elmMake")
+    }
+}
