@@ -1,10 +1,21 @@
-plugins {
-    id("org.mohme.gradle.elm-plugin") version "3.2.2"
+tasks.register<Exec>("elmMake") {
+    val jsPath = "$projectDir/build/elm.js"
+
+    inputs.dir("$projectDir/src/")
+    outputs.file(file(jsPath))
+
+    workingDir = File("$projectDir/src/")
+    commandLine = listOf("elm", "make", "$projectDir/src/Main.elm", "--output", jsPath )
 }
 
-elm {
-    sourceDir.set(project.file("src"))
-    targetModuleName.set("elm.js")
-    debug.set(true)
-    optimize.set(false)
-}
+
+//project(":backend") {
+//    tasks.named("processResources") {
+//        dependsOn(":frontend:elmMake")
+////        tasks.register<Copy>("copyFrontend") {
+////            from(tasks.getByPath(":frontend:elmMake").outputs)
+////            into("public")
+////        }
+//
+//    }
+//}
