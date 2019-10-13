@@ -1,4 +1,5 @@
 import com.github.spotbugs.SpotBugsTask
+import info.solidsoft.gradle.pitest.PitestPluginExtension
 
 plugins {
     java
@@ -63,5 +64,15 @@ tasks.withType<SpotBugsTask> {
     reports.xml.isEnabled = false
     reports.html.isEnabled = true
 }
+
+configure<PitestPluginExtension> {
+    pitestVersion.set("1.4.10")
+
+    // FIXME: Commenting coverage threshold so task does'nt fail check task.
+//    coverageThreshold.set(80)
+    // This can add integration test to pitest plugin, but only unit tests should be used for now
+//    testSourceSets.add(sourceSets["integrationTest"])
+}
+
 
 tasks.named("check") { dependsOn(tasks["pitest"]) }
