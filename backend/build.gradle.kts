@@ -1,4 +1,5 @@
 import com.github.spotbugs.SpotBugsTask
+import info.solidsoft.gradle.pitest.PitestPluginExtension
 
 plugins {
     java
@@ -7,6 +8,7 @@ plugins {
     id("org.asciidoctor.convert") version "1.5.8"
 
     id("com.github.spotbugs") version "2.0.0"
+    id("info.solidsoft.pitest") version "1.4.5"
 }
 
 apply(from = "../gradle/integrationTest.gradle.kts")
@@ -62,3 +64,5 @@ tasks.withType<SpotBugsTask> {
     reports.xml.isEnabled = false
     reports.html.isEnabled = true
 }
+
+tasks.named("check") { dependsOn(tasks["pitest"]) }
