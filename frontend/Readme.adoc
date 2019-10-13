@@ -3,3 +3,7 @@
 == Init
 
 * elm init
+
+== Starting application
+
+`elm-live src/App.elm --open --pushstate -- --output=elm.js`
