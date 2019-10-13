@@ -10,6 +10,7 @@ plugins {
 }
 
 apply(from = "../gradle/integrationTest.gradle.kts")
+// FIXME: This would be enabled in real project. It is commented out to show other plugins.
 //apply(from = "../gradle/jacoco.gradle.kts")
 apply(from = "../gradle/checkstyle.gradle.kts")
 apply(from = "../gradle/pmd.gradle.kts")
