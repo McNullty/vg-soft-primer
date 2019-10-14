@@ -15,8 +15,21 @@ tasks.register<Delete>("clean") {
 }
 
 
+
+tasks.register<Copy>("copyElmApp") {
+    val elmMake by tasks.getting
+
+    val processResources by project(":backend").tasks.existing(ProcessResources::class)
+
+    println("Output: " + processResources.get().destinationDir)
+    from(elmMake.outputs)
+    into(processResources.get().destinationDir)
+
+    dependsOn(":frontend:elmMake")
+}
+
 project(":backend") {
     tasks.named("processResources") {
-        dependsOn(":frontend:elmMake")
+        dependsOn(":frontend:copyElmApp")
     }
 }
