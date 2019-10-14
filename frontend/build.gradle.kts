@@ -21,9 +21,8 @@ tasks.register<Copy>("copyElmApp") {
 
     val processResources by project(":backend").tasks.existing(ProcessResources::class)
 
-    println("Output: " + processResources.get().destinationDir)
     from(elmMake.outputs)
-    into(processResources.get().destinationDir)
+    into(processResources.get().destinationDir.toString() + "/public")
 
     dependsOn(":frontend:elmMake")
 }
