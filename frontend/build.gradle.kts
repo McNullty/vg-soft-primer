@@ -19,8 +19,6 @@ tasks.register<Delete>("clean") {
     delete.add("build")
 }
 
-
-
 tasks.register<Copy>("copyElmApp") {
     val elmMake by tasks.getting
     val copyIndexHtml by tasks.getting
