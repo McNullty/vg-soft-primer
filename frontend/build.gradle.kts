@@ -1,3 +1,6 @@
+/**
+ * Builds js output by compiling ELM sources
+ */
 tasks.register<Exec>("elmMake") {
     val jsPath = "$projectDir/build/elm.js"
 
@@ -6,6 +9,19 @@ tasks.register<Exec>("elmMake") {
 
     workingDir = File("$projectDir/src/")
     commandLine = listOf("elm", "make", "$projectDir/src/Main.elm", "--output", jsPath )
+}
+
+/**
+ * Starting elm live
+ */
+tasks.register<Exec>("elmLive") {
+    workingDir = File("$projectDir/src/")
+    commandLine = listOf("elm-live", "$projectDir/src/Main.elm", "--open", "--pushstate",
+            "--", "--output=$projectDir/src/elm.js" )
+}
+
+tasks.register<Delete>("cleanElmLive") {
+    delete.add("$projectDir/src/elm.js")
 }
 
 tasks.register<Copy>("copyIndexHtml") {
@@ -17,6 +33,7 @@ tasks.register<Delete>("clean") {
     delete.add("elm/elm-stuff/0.19.0")
     delete.add("elm/elm-stuff/generated-code")
     delete.add("build")
+    delete.add("$projectDir/src/elm.js")
 }
 
 tasks.register<Copy>("copyElmApp") {
