@@ -2,6 +2,9 @@
  * Builds js output by compiling ELM sources
  */
 tasks.register<Exec>("elmMake") {
+    description = "Compiles elm project"
+    group = "build"
+
     val jsPath = "$projectDir/build/elm.js"
 
     inputs.dir("$projectDir/src/")
