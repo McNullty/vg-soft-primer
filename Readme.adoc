@@ -14,9 +14,11 @@ If integration test directory is marked es source and not test (blue icon and no
 Described https://docs.gradle.org/current/userguide/gradle_wrapper.html#sec:upgrading_wrapper
 
 Eg.
-```bash
+
+[source,bash]
+----
 $ ./gradlew wrapper --gradle-version 5.6.2
-```
+----
 
 == Code coverage
 
@@ -25,9 +27,11 @@ Check task only depends on `jacocoTestCoverageVerification`. This is to speed up
 Developer will be interested in jacoco reports only when build is failing because if low coverage or when he is interested in code coverage.
 
 Reports can be created by running :
-```bash
+
+[source,bash]
+----
 $ ./gradlew clean jacocoIntegrationTestReport jacocoTestReport jacocoUnitTestReport
-```
+----
 
 == Checkstyle
 We have taken checkstyle configuration from https://github.com/checkstyle/checkstyle/raw/master/src/main/resources/google_checks.xml
