@@ -105,7 +105,7 @@ buildErrorMessage httpError =
 fetchPosts : Cmd Msg
 fetchPosts =
     Http.get
-        { url = "http://localhost:8080/api/greeting"
+        { url = "/api/greeting"
         , expect =
             greetingDecoder
                 |> Http.expectJson (RemoteData.fromResult >> GreetingReceived)
