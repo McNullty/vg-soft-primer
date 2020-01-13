@@ -1,8 +1,13 @@
 module Main exposing (..)
 
+import Bootstrap.Button as Button exposing (button, onClick)
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
+import Bootstrap.Table as Table
+import Bootstrap.Utilities.Spacing as Spacing
 import Browser
-import Html exposing (..)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, h1, h3, text)
+import Html.Attributes exposing (class)
 import Http
 import Json.Decode as Decode exposing (Decoder, int, string)
 import Json.Decode.Pipeline exposing (required)
@@ -42,11 +47,19 @@ idToString (GreetingId id) =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ button [ onClick FetchGreeting ]
-            [ text "Refresh posts" ]
+    Grid.container []
+        [ Grid.row []
+            [ Grid.col [ Col.md6, Col.offsetMd3 ]
+                [ h1 [ class "text-center" ] [ text "Greeting view" ]]
+            ]
+        , Grid.row []
+            [ Grid.col [ Col.md6, Col.offsetMd3 ]
+                [ button [ onClick FetchGreeting, Button.large, Button.primary, Button.attrs [ Spacing.m1 ]]
+                    [ text "Refresh posts" ]]
+            ]
         , viewGreetingOrError model
         ]
+
 
 viewGreetingOrError : Model -> Html Msg
 viewGreetingOrError model =
@@ -65,11 +78,21 @@ viewGreetingOrError model =
 
 viewGreeting : Greeting -> Html Msg
 viewGreeting greeting =
-    tr []
-        [ td []
-            [ text (idToString greeting.id) ]
-        , td []
-            [ text greeting.content ]
+    div []
+        [ Table.simpleTable
+            ( Table.simpleThead
+                [ Table.th [] [ text "ID" ]
+                , Table.th [] [ text "Greeting" ]
+                ]
+                , Table.tbody []
+                    [ Table.tr []
+                        [ Table.td []
+                             [ text (idToString greeting.id) ]
+                        , Table.td []
+                             [ text (greeting.content) ]
+                        ]
+                    ]
+            )
         ]
 
 viewError : String -> Html Msg
