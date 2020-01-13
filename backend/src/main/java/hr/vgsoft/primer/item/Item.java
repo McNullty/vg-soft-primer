@@ -17,6 +17,7 @@ import org.hibernate.annotations.DynamicUpdate;
 @Data
 @DynamicUpdate
 @Entity
+@Table(name = "items")
 public class Item {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
