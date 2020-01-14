@@ -48,3 +48,83 @@ First configure plugin in build.gradle.kts and then look for types that will Int
 By default embedded H2 database is started and can be accessed at URL http://localhost:8080/h2-console/
 
 JDBC URL: jdbc:h2:mem:testdb
+
+== Running application
+
+First you need to build application with:
+[source,bash]
+----
+./gradlew clean build
+----
+Then you can star application with:
+[source,bash]
+----
+java -jar ./backend/build/libs/backend.jar
+----
+
+== Debugging build
+[source,bash]
+----
+./gradlew -Dorg.gradle.debug=true -Penv=dev clean build
+----
+
+
+=== Profiles
+
+There are two profiles. DEFAULT profile is default profile that is using H2 database and DEV profile that is using
+PostgreSQL database.
+
+DEV profile is using flyway to version database and for DEFAULT profile database is created by hibernate.
+
+==== Default profile
+
+This profile is used for quick user testing of application. Application class with main method is started without any
+profiles. H2 database is used and tables are automatically created when application starts. Test data is inserted at
+start of application with Application Listener that listens for ContextRefreshedEvent. Developer can start application
+in debug mode and put brake points in code. Database can be access over H2 console that is started whit application.
+
+Building package:
+[source,bash]
+----
+./gradlew build
+----
+
+Running application:
+[source,bash]
+----
+java -jar ./backend/build/libs/backend.jar
+----
+
+==== Test profile
+
+This profile is for running automated tests (unit,integration, etc.) Dhis profile also uses H2 database but test data is
+inserted in setup method of test and not by ApplicationListener.
+
+==== Dev profile
+
+This profile is used to simulate production environment. Same database is used in dev and prod profile (PostgresSQL).
+database schema is initialized by flyway scripts and initial data can be inserted also by flyway scripts or with
+ApplicationListener. Developer can run application in debug mode and debug code and can connect to database with any
+db client and inspect results.
+
+Building package:
+[source,bash]
+----
+./gradlew build
+----
+
+Starting Postgres database docker:
+[source,bash]
+----
+docker run -it --rm --name vg-postgres -p 5432:5432 -e POSTGRES_USER=rootuser -e POSTGRES_PASSWORD=rootpassword -e POSTGRES_DB=vgsoft postgres
+----
+
+Application can be run with dev profile from ide or from terminal with:
+[source,bash]
+----
+java -Dspring.profiles.active=dev -jar ./backend/build/libs/backend.jar
+----
+
+==== Prod profile
+
+This profile is for running application in prtoduction. Schema is initialazed with flyway scripts.
