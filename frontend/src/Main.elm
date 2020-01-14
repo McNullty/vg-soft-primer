@@ -7,7 +7,7 @@ import Bootstrap.Spinner as Spinner
 import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
 import Browser
-import Html exposing (Html, div, h1, h3, text)
+import Html exposing (Html, div, h1, h3, text, span)
 import Html.Attributes exposing (class)
 import Http
 import Json.Decode as Decode exposing (Decoder, int, string)
@@ -55,16 +55,13 @@ view model =
             ]
         , Grid.row []
             [ Grid.col [ Col.md6, Col.offsetMd3 ]
-                [ div []
-                    [ Spinner.spinner [ Spinner.large] [ text "Loading..." ] ]
-                ]
-            ]
-        , Grid.row []
-            [ Grid.col [ Col.md6, Col.offsetMd3 ]
                 [ button [ onClick FetchGreeting, Button.large, Button.primary, Button.attrs [ Spacing.m1 ]]
                     [ text "Refresh posts" ]]
             ]
-        , viewGreetingOrError model
+        , Grid.row []
+            [ Grid.col [ Col.md6, Col.offsetMd3 ]
+                [ viewGreetingOrError model ]
+            ]
         ]
 
 
@@ -76,7 +73,7 @@ viewGreetingOrError model =
 
         RemoteData.Loading ->
             div []
-                [ Spinner.spinner [ Spinner.large ] [ text "Loading..." ] ]
+                [ Spinner.spinner [ Spinner.large ] [ span [ class "sr-only"]  [ text "Loading..."] ] ]
 
         RemoteData.Success greeting ->
             viewGreeting greeting
