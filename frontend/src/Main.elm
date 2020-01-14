@@ -3,10 +3,11 @@ module Main exposing (..)
 import Bootstrap.Button as Button exposing (button, onClick)
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
+import Bootstrap.Spinner as Spinner
 import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
 import Browser
-import Html exposing (Html, div, h1, h3, text)
+import Html exposing (Html, div, h1, h3, text, span)
 import Html.Attributes exposing (class)
 import Http
 import Json.Decode as Decode exposing (Decoder, int, string)
@@ -57,7 +58,10 @@ view model =
                 [ button [ onClick FetchGreeting, Button.large, Button.primary, Button.attrs [ Spacing.m1 ]]
                     [ text "Refresh posts" ]]
             ]
-        , viewGreetingOrError model
+        , Grid.row []
+            [ Grid.col [ Col.md6, Col.offsetMd3 ]
+                [ viewGreetingOrError model ]
+            ]
         ]
 
 
@@ -68,7 +72,8 @@ viewGreetingOrError model =
             text ""
 
         RemoteData.Loading ->
-            h3 [] [ text "Loading..." ]
+            div []
+                [ Spinner.spinner [ Spinner.large ] [ span [ class "sr-only"]  [ text "Loading..."] ] ]
 
         RemoteData.Success greeting ->
             viewGreeting greeting
