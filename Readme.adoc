@@ -77,6 +77,12 @@ PostgreSQL database.
 DEV profile is using flyway to version database and for DEFAULT profile database is created by hibernate.
 
 ==== Default profile
+
+This profile is used for quick user testing of application. Application class with main method is started without any
+profiles. H2 database is used and tables are automatically created when application starts. Test data is inserted at
+start of application with Application Listener that listens for ContextRefreshedEvent. Developer can start application
+in debug mode and put brake points in code. Database can be access over H2 console that is started whit application.
+
 Building package:
 [source,bash]
 ----
@@ -89,7 +95,18 @@ Running application:
 java -jar ./backend/build/libs/backend.jar
 ----
 
+==== Test profile
+
+This profile is for running automated tests (unit,integration, etc.) Dhis profile also uses H2 database but test data is
+inserted in setup method of test and not by ApplicationListener.
+
 ==== Dev profile
+
+This profile is used to simulate production environment. Same database is used in dev and prod profile (PostgresSQL).
+database schema is initialized by flyway scripts and initial data can be inserted also by flyway scripts or with
+ApplicationListener. Developer can run application in debug mode and debug code and can connect to database with any
+db client and inspect results.
+
 Building package:
 [source,bash]
 ----
@@ -107,3 +124,7 @@ Application can be run with dev profile from ide or from terminal with:
 ----
 java -Dspring.profiles.active=dev -jar ./backend/build/libs/backend.jar
 ----
+
+==== Prod profile
+
+This profile is for running application in prtoduction. Schema is initialazed with flyway scripts.
