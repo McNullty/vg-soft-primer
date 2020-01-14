@@ -48,3 +48,62 @@ First configure plugin in build.gradle.kts and then look for types that will Int
 By default embedded H2 database is started and can be accessed at URL http://localhost:8080/h2-console/
 
 JDBC URL: jdbc:h2:mem:testdb
+
+== Running application
+
+First you need to build application with:
+[source,bash]
+----
+./gradlew clean build
+----
+Then you can star application with:
+[source,bash]
+----
+java -jar ./backend/build/libs/backend.jar
+----
+
+== Debugging build
+[source,bash]
+----
+./gradlew -Dorg.gradle.debug=true -Penv=dev clean build
+----
+
+
+=== Profiles
+
+There are two profiles. DEFAULT profile is default profile that is using H2 database and DEV profile that is using
+PostgreSQL database.
+
+DEV profile is using flyway to version database and for DEFAULT profile database is created by hibernate.
+
+==== Default profile
+Building package:
+[source,bash]
+----
+./gradlew build
+----
+
+Running application:
+[source,bash]
+----
+java -jar ./backend/build/libs/backend.jar
+----
+
+==== Dev profile
+Building package:
+[source,bash]
+----
+./gradlew build
+----
+
+Starting Postgres database docker:
+[source,bash]
+----
+docker run -it --rm --name vg-postgres -p 5432:5432 -e POSTGRES_USER=rootuser -e POSTGRES_PASSWORD=rootpassword -e POSTGRES_DB=vgsoft postgres
+----
+
+Application can be run with dev profile from ide or from terminal with:
+[source,bash]
+----
+java -Dspring.profiles.active=dev -jar ./backend/build/libs/backend.jar
+----
