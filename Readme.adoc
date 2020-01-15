@@ -100,7 +100,7 @@ java -jar ./backend/build/libs/backend.jar
 This profile is for running automated tests (unit,integration, etc.) Dhis profile also uses H2 database but test data is
 inserted in setup method of test and not by ApplicationListener.
 
-==== Dev profile
+==== Staging profile
 
 This profile is used to simulate production environment. Same database is used in dev and prod profile (PostgresSQL).
 database schema is initialized by flyway scripts and initial data can be inserted also by flyway scripts or with
@@ -119,12 +119,18 @@ Starting Postgres database docker:
 docker run -it --rm --name vg-postgres -p 5432:5432 -e POSTGRES_USER=rootuser -e POSTGRES_PASSWORD=rootpassword -e POSTGRES_DB=vgsoft postgres
 ----
 
-Application can be run with dev profile from ide or from terminal with:
+Application can be run with staging profile from ide or from terminal with:
 [source,bash]
 ----
-java -Dspring.profiles.active=dev -jar ./backend/build/libs/backend.jar
+java -Dspring.profiles.active=staging -jar ./backend/build/libs/backend.jar
 ----
 
 ==== Prod profile
 
 This profile is for running application in prtoduction. Schema is initialazed with flyway scripts.
+
+Application can be run with prod profile from ide or from terminal with:
+[source,bash]
+----
+java -Dspring.profiles.active=prod -jar ./backend/build/libs/backend.jar
+----
