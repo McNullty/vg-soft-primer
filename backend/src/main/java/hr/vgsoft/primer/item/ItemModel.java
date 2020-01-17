@@ -18,8 +18,15 @@ public class ItemModel extends RepresentationModel<ItemModel> {
     this.description = item.getDescription();
 
     final Link selfRelLink = WebMvcLinkBuilder
-            .linkTo(WebMvcLinkBuilder.methodOn(ItemController.class).getItem(item.getUuid()))
-            .withSelfRel();
+            .linkTo(WebMvcLinkBuilder.methodOn(ItemController.class).findItem(item.getUuid()))
+            .withSelfRel()
+            ;
+
     add(selfRelLink);
+    add(selfRelLink.andAffordance(
+            WebMvcLinkBuilder.afford(WebMvcLinkBuilder.methodOn(ItemController.class)
+                    .updateItem(item.getUuid(), null))));
+
+
   }
 }
