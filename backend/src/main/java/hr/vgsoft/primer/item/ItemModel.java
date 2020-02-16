@@ -5,10 +5,12 @@ import lombok.Value;
 
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @Value
+@Relation(value = "item", collectionRelation = "items")
 public class ItemModel extends RepresentationModel<ItemModel> {
   private final String name;
   private final String description;
@@ -23,10 +25,6 @@ public class ItemModel extends RepresentationModel<ItemModel> {
             ;
 
     add(selfRelLink);
-    add(selfRelLink.andAffordance(
-            WebMvcLinkBuilder.afford(WebMvcLinkBuilder.methodOn(ItemController.class)
-                    .updateItem(item.getUuid(), null))));
-
 
   }
 }
