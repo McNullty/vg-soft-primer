@@ -1,10 +1,12 @@
 package hr.vgsoft.primer.item;
 
-import java.util.Collection;
 import java.util.UUID;
 
-import org.springframework.hateoas.CollectionModel;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.ExposesResourceFor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,17 +33,16 @@ public class ItemController {
   }
 
   @GetMapping
-  public ResponseEntity<CollectionModel<ItemModel>> findAllItems() {
+  public ResponseEntity<PagedModel<ItemModel>> findAllItems(
+          final Pageable pageable, final PagedResourcesAssembler<Item> assembler) {
 
-    final Collection<Item> items = itemService.findAll();
+    final Page<Item> items = itemService.findAll(pageable);
 
-    final CollectionModel<ItemModel> itemModels = itemModelAssembler.toCollectionModel(items);
-
-    return ResponseEntity.ok(itemModels);
+    return ResponseEntity.ok(assembler.toModel(items, itemModelAssembler));
   }
 
   @PostMapping
-  public ResponseEntity<?> newItem(@RequestBody final Item item) {
+  public ResponseEntity<?> newItem(@RequestBody final ItemModel itemModel) {
     // TODO: fix
     return null;
   }

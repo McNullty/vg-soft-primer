@@ -1,8 +1,9 @@
 package hr.vgsoft.primer.item;
 
-import java.util.Collection;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +18,8 @@ public class ItemServiceImpl implements ItemService {
 
   @Transactional(readOnly = true)
   @Override
-  public Collection<Item> findAll() {
-    return itemRepository.findAll();
+  public Page<Item> findAll(final Pageable pageable) {
+    return itemRepository.findAll(pageable);
   }
 
   @Transactional(readOnly = true)
