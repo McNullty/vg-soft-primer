@@ -26,12 +26,19 @@ public class ItemTestDataCreator implements ApplicationListener<ContextRefreshed
   @Override
   public void onApplicationEvent(final ContextRefreshedEvent event) {
 
-    final UUID itemUuid = UUID.randomUUID();
-    log.debug("Generated Item UUID: {}", itemUuid);
+    UUID itemUuid = UUID.randomUUID();
+    log.debug("Generated First Item UUID: {}", itemUuid);
 
     final Item item =
             new Item(itemUuid, "TestItem1", "Description for first item");
 
     itemRepository.save(item);
+
+    itemUuid = UUID.randomUUID();
+    log.debug("Generated Second Item UUID: {}", itemUuid);
+    final Item item2 =
+            new Item(itemUuid, "TestItem2", "Description for second item");
+
+    itemRepository.save(item2);
   }
 }
