@@ -10,4 +10,6 @@ public interface ItemService {
   Page<Item> findAll(final Pageable pageable);
 
   Item getItemByUuid(final UUID uuid);
+
+  Item newItem(final NewItemModel itemModel);
 }

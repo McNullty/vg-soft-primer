@@ -27,4 +27,12 @@ public class ItemServiceImpl implements ItemService {
   public Item getItemByUuid(final UUID uuid) {
     return itemRepository.findById(uuid).orElseThrow(() -> new ItemNotFoundException(uuid));
   }
+
+  @Override
+  public Item newItem(final NewItemModel itemModel) {
+
+    final Item item = new Item(UUID.randomUUID(), itemModel.getName(), itemModel.getDescription());
+
+    return itemRepository.save(item);
+  }
 }
