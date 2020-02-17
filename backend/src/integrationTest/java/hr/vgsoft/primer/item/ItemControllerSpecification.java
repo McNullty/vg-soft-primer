@@ -84,4 +84,16 @@ class ItemControllerSpecification {
             .andExpect(MockMvcResultMatchers.header().exists("Location"))
     ;
   }
+
+  @Test
+  void shouldFindItemByUUID() throws Exception {
+    final UUID uuid = UUID.randomUUID();
+    final Item item = new Item(uuid, "Test", "Test description");
+
+    BDDMockito.given(itemService.getItemByUuid(uuid)).willReturn(item);
+
+    mvc.perform(MockMvcRequestBuilders.get("/api/items/" + uuid.toString()))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isOk());
+  }
 }
