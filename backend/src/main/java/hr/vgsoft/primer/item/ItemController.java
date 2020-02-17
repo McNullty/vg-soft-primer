@@ -1,13 +1,17 @@
 package hr.vgsoft.primer.item;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.ExposesResourceFor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,9 +46,18 @@ public class ItemController {
   }
 
   @PostMapping
-  public ResponseEntity<?> newItem(@RequestBody final ItemModel itemModel) {
-    // TODO: fix
-    return null;
+  public ResponseEntity<?> newItem(@RequestBody final NewItemModel newItemModel) {
+
+    Item item = itemService.newItem(newItemModel);
+
+    final ItemModel itemModel = new ItemModel(item);
+    final Optional<Link> link = itemModel.getLink(IanaLinkRelations.SELF);
+
+    if (link.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    return ResponseEntity.created(link.get().toUri()).build();
   }
 
   @GetMapping(

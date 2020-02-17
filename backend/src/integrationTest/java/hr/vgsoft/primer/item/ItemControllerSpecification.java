@@ -2,8 +2,11 @@ package hr.vgsoft.primer.item;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -34,11 +38,14 @@ class ItemControllerSpecification {
   @Autowired
   private MockMvc mvc;
 
+  @Autowired
+  ObjectMapper objectMapper;
+
   @MockBean
   private ItemService itemService;
 
   @Test
-  void testThatAllItemsAreReturned() throws Exception {
+  void shouldReturnPageWithItems() throws Exception {
 
     final List<Item> items =
             Arrays.asList(
@@ -53,6 +60,28 @@ class ItemControllerSpecification {
             .andDo(MockMvcResultHandlers.print())
             .andExpect(MockMvcResultMatchers.status().isOk())
             .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_VALUE))
+    ;
+  }
+
+  @Test
+  void shouldCreateNewItem() throws Exception {
+
+    String itemName = "Test";
+    String itemDescription = "Test Description";
+
+    BDDMockito.given(itemService.newItem(Mockito.any(NewItemModel.class)))
+            .willAnswer( i -> new Item(UUID.randomUUID(), itemName, itemDescription));
+
+    Map<String, String> itemJson = new HashMap<>();
+    itemJson.put("name", itemName);
+    itemJson.put("description", itemDescription);
+
+    mvc.perform(MockMvcRequestBuilders.post("/api/items")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(itemJson)))
+            .andDo(MockMvcResultHandlers.print())
+            .andExpect(MockMvcResultMatchers.status().isCreated())
+            .andExpect(MockMvcResultMatchers.header().exists("Location"))
     ;
   }
 }
