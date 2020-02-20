@@ -96,4 +96,8 @@ class ItemControllerSpecification {
             .andDo(MockMvcResultHandlers.print())
             .andExpect(MockMvcResultMatchers.status().isOk());
   }
+
+  void shouldRemoveItemByUUID() throws Exception {
+
+  }
 }
