@@ -74,11 +74,18 @@ public class ItemController {
   @PutMapping(value = "/{itemUuid}")
   public ResponseEntity<?> updateItem(
           @PathVariable final UUID itemUuid, @RequestBody final ItemModel updateItem) {
+
+    itemService.updateItem(itemUuid, updateItem);
+
+    // TODO: Check correct response
     return ResponseEntity.ok().build();
   }
 
   public ResponseEntity<?> deleteItem(@PathVariable final UUID itemUuid) {
-    // TODO: fix
-    return null;
+
+    itemService.deleteItem(itemUuid);
+
+    // TODO: Check correct response
+    return ResponseEntity.ok().build();
   }
 }

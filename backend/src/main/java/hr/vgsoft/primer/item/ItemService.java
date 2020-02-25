@@ -12,4 +12,8 @@ public interface ItemService {
   Item getItemByUuid(final UUID uuid);
 
   Item newItem(final NewItemModel itemModel);
+
+  void updateItem(UUID itemUuid, ItemModel updateItem);
+
+  void deleteItem(UUID itemUuid);
 }

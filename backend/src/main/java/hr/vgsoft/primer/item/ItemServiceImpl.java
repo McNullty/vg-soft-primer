@@ -1,5 +1,6 @@
 package hr.vgsoft.primer.item;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -34,5 +35,23 @@ public class ItemServiceImpl implements ItemService {
     final Item item = new Item(UUID.randomUUID(), itemModel.getName(), itemModel.getDescription());
 
     return itemRepository.save(item);
+  }
+
+  @Override
+  public void updateItem(final UUID uuid, final ItemModel updateItem) {
+
+    final Item item =
+            itemRepository.findById(uuid).orElseThrow(() -> new ItemNotFoundException(uuid));
+
+    item.setName(updateItem.getName());
+    item.setDescription(updateItem.getDescription());
+  }
+
+  @Override
+  public void deleteItem(final UUID uuid) {
+    final Item item =
+            itemRepository.findById(uuid).orElseThrow(() -> new ItemNotFoundException(uuid));
+
+    itemRepository.delete(item);
   }
 }
