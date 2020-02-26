@@ -30,6 +30,7 @@ val integrationTestTask = task<Test>("integrationTest") {
 
     shouldRunAfter("test")
 
+    useJUnitPlatform()
 }
 tasks.named("check") { dependsOn(integrationTestTask) }
 
