@@ -3,7 +3,7 @@ import info.solidsoft.gradle.pitest.PitestPluginExtension
 
 plugins {
     java
-    id("org.springframework.boot") version "2.2.4.RELEASE"
+    id("org.springframework.boot") version "2.2.5.RELEASE"
     id("io.spring.dependency-management") version "1.0.8.RELEASE"
     id("org.asciidoctor.convert") version "1.5.8"
 
