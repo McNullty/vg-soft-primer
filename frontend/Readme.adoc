@@ -6,4 +6,4 @@
 
 == Starting application
 
-`elm-live src/App.elm --open --pushstate -- --output=elm.js`
+`elm-live src/Main.elm --open --pushstate -- --output=elm.js`
