@@ -7,7 +7,7 @@ This project shows best practices for developing software project with Spring Bo
 
 Integration tests are configured as described in https://docs.gradle.org/current/userguide/java_testing.html#sec:configuring_java_integration_tests
 
-If integration test directory is marked es source and not test (blue icon and not green) you should manualy change it in Intellij project properties, but after gradle refresh it should stay marked as test.
+If integration test directory is marked es source and not test (blue icon and not green) you should manually change it in Intellij project properties, but after gradle refresh it should stay marked as test.
 
 == Upgrading gradlew version
 
@@ -56,7 +56,7 @@ First you need to build application with:
 ----
 ./gradlew clean build
 ----
-Then you can star application with:
+Then you can start application with:
 [source,bash]
 ----
 java -jar ./backend/build/libs/backend.jar
