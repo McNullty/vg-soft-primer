@@ -5,6 +5,7 @@ import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Html exposing (Html, div, h1, h3, text)
 import Html.Attributes exposing (href)
+import Items
 import Route exposing (Route)
 import Greeting
 import Url exposing (Url)
@@ -46,8 +47,9 @@ currentView model =
         AboutPage ->
             aboutView
 
-        ItemsPage ->
-            itemsView
+        ItemsPage itemsModel ->
+            Items.view itemsModel
+                |> Html.map ItemsMsg
 
 notFoundView : Html msg
 notFoundView =
@@ -58,13 +60,6 @@ aboutView  =
     div []
         [ h1 [] [ text "About" ]
         , text "TODO: About VG soft and link to repo"
-        ]
-
-itemsView : Html Msg
-itemsView  =
-    div []
-        [ h1 [] [ text "Items" ]
-        , text "TODO: Items View"
         ]
 
 main : Program () Model Msg
@@ -89,13 +84,14 @@ type alias Model =
 type Page
     = NotFoundPage
     | GreetingPage Greeting.Model
-    | ItemsPage
+    | ItemsPage Items.Model
     | AboutPage
 
 
 
 type Msg
     = GreetingMsg Greeting.Msg
+    | ItemsMsg Items.Msg
     | LinkClicked UrlRequest
     | UrlChanged Url
     | NavMsg NavBar.State
@@ -144,7 +140,11 @@ urlUpdate url model =
                     ( { model | page = AboutPage }, Cmd.none)
 
                 Route.Items ->
-                    ( { model | page = ItemsPage }, Cmd.none)
+                    let
+                        ( itemsModel, itemsCmds ) =
+                            Items.init
+                    in
+                    ( { model | page = (ItemsPage itemsModel) }, Cmd.map ItemsMsg itemsCmds)
 
                 _ ->
                     (model, Cmd.none)
@@ -179,7 +179,11 @@ initCurrentPage ( model, existingCmds ) =
                     ( GreetingPage pageModel, Cmd.map GreetingMsg pageCmds )
 
                 Route.Items ->
-                    ( ItemsPage, Cmd.none )
+                    let
+                        ( pageModel, pageCmds ) =
+                            Items.init
+                    in
+                    ( ItemsPage pageModel, Cmd.map ItemsMsg pageCmds )
 
                 Route.About ->
                     ( AboutPage, Cmd.none )
@@ -225,6 +229,15 @@ update msg model =
             in
             ( { model | page = GreetingPage updatedPageModel }
             , Cmd.map GreetingMsg updatedCmd
+            )
+
+        ( ItemsMsg subMsg, ItemsPage pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    Items.update subMsg pageModel
+            in
+            ( { model | page = ItemsPage updatedPageModel }
+            , Cmd.map ItemsMsg updatedCmd
             )
 
         ( _, _ ) ->
