@@ -40,5 +40,13 @@ public class ItemTestDataCreator implements ApplicationListener<ContextRefreshed
             new Item(itemUuid, "TestItem2", "Description for second item");
 
     itemRepository.save(item2);
+
+    for (int i = 3; i <= 50; i++) {
+      itemUuid = UUID.randomUUID();
+      final Item itemX =
+              new Item(itemUuid, "TestItem" + i, "Description for " + i + ". item");
+
+      itemRepository.save(itemX);
+    }
   }
 }
