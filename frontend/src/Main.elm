@@ -1,18 +1,36 @@
 module Main exposing (..)
 
+import Bootstrap.Navbar as NavBar
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
-import Html exposing (Html, h3, text)
+import Html exposing (Html, div, h1, h3, text)
+import Html.Attributes exposing (href)
 import Route exposing (Route)
 import Greeting
 import Url exposing (Url)
+import Url.Parser as UrlParser exposing ((</>), Parser, s, top)
 
 
 view : Model -> Document Msg
 view model =
     { title = "VG Primer App"
-    , body = [ currentView model ]
+    , body =
+        [ div []
+            [ menu model
+            , currentView model ]
+        ]
     }
+
+menu : Model -> Html Msg
+menu model =
+    NavBar.config NavMsg
+        |> NavBar.withAnimation
+        |> NavBar.container
+        |> NavBar.brand [ href "#" ] [ text "Elm Stopwatch" ]
+        |> NavBar.items
+            [ NavBar.itemLink [ href "#about" ] [ text "About" ]
+            ]
+        |> NavBar.view model.navState
 
 currentView : Model -> Html Msg
 currentView model =
@@ -24,10 +42,19 @@ currentView model =
             Greeting.view pageModel
                 |> Html.map GreetingMsg
 
+        AboutPage ->
+            aboutView
+
 notFoundView : Html msg
 notFoundView =
     h3 [] [ text "Oops! The page you requested was not found!" ]
 
+aboutView : Html Msg
+aboutView  =
+    div []
+        [ h1 [] [ text "About" ]
+        , text "TODO: About VG soft and link to repo"
+        ]
 
 
 main : Program () Model Msg
@@ -36,7 +63,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         , onUrlRequest = LinkClicked
         , onUrlChange = UrlChanged
         }
@@ -45,28 +72,81 @@ type alias Model =
     { route : Route
     , page : Page
     , navKey : Nav.Key
+    , navState : NavBar.State
     }
+
 
 type Page
     = NotFoundPage
     | GreetingPage Greeting.Model
+    | AboutPage
+
 
 
 type Msg
     = GreetingMsg Greeting.Msg
     | LinkClicked UrlRequest
     | UrlChanged Url
+    | NavMsg NavBar.State
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ NavBar.subscriptions model.navState NavMsg
+        ]
+
 
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url navKey =
     let
-        model =
-            { route = Route.parseUrl url
-            , page = NotFoundPage
-            , navKey = navKey
-            }
+        ( navState, navCmd ) =
+                    NavBar.initialState NavMsg
+
+        ( model, urlCmd ) =
+            urlUpdate url
+                { route = Route.parseUrl url
+                , page = NotFoundPage
+                , navKey = navKey
+                , navState = navState
+                }
     in
-    initCurrentPage ( model, Cmd.none )
+    initCurrentPage ( model, Cmd.batch [ urlCmd, navCmd ] )
+
+urlUpdate : Url -> Model -> ( Model, Cmd Msg )
+urlUpdate url model =
+    case decode url of
+        Nothing ->
+            ( { model | page = NotFoundPage }, Cmd.none )
+
+        Just route ->
+            case route of
+                Route.Greeting ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Greeting.init
+                    in
+                    ( { model | page = (GreetingPage pageModel) }, Cmd.map GreetingMsg pageCmds)
+
+                -- TODO: Add other routes
+                Route.About ->
+                    ( { model | page = AboutPage }, Cmd.none)
+
+                _ ->
+                    (model, Cmd.none)
+
+decode : Url -> Maybe Route
+decode url =
+    { url | path = Maybe.withDefault "" url.fragment, fragment = Nothing }
+    |> UrlParser.parse routeParser
+
+
+routeParser : Parser (Route -> a) a
+routeParser =
+    UrlParser.oneOf
+        [ UrlParser.map Route.Greeting top
+        , UrlParser.map Route.About (s "about")
+        ]
 
 initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 initCurrentPage ( model, existingCmds ) =
@@ -83,8 +163,12 @@ initCurrentPage ( model, existingCmds ) =
                     in
                     ( GreetingPage pageModel, Cmd.map GreetingMsg pageCmds )
 
-                -- Refactor to point to ItemsPage
+                -- TODO: Refactor to point to ItemsPage
                 Route.Items ->
+                    ( NotFoundPage, Cmd.none )
+
+                -- TODO: Refactor to point to ItemsPage
+                Route.About ->
                     ( NotFoundPage, Cmd.none )
 
     in
@@ -96,16 +180,11 @@ initCurrentPage ( model, existingCmds ) =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        _ = Debug.log "Msg: " msg
+        _ = Debug.log "Model: " model
+    in
     case ( msg, model.page ) of
-        ( GreetingMsg subMsg, GreetingPage pageModel ) ->
-            let
-                ( updatedPageModel, updatedCmd ) =
-                    Greeting.update subMsg pageModel
-            in
-            ( { model | page = GreetingPage updatedPageModel }
-            , Cmd.map GreetingMsg updatedCmd
-            )
-
         ( LinkClicked urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
@@ -119,12 +198,21 @@ update msg model =
                     )
 
         ( UrlChanged url, _ ) ->
+            urlUpdate url model
+
+        ( NavMsg state, _) ->
+            ( { model | navState = state }
+            , Cmd.none
+            )
+
+        ( GreetingMsg subMsg, GreetingPage pageModel ) ->
             let
-                newRoute =
-                    Route.parseUrl url
+                ( updatedPageModel, updatedCmd ) =
+                    Greeting.update subMsg pageModel
             in
-            ( { model | route = newRoute }, Cmd.none )
-                |> initCurrentPage
+            ( { model | page = GreetingPage updatedPageModel }
+            , Cmd.map GreetingMsg updatedCmd
+            )
 
         ( _, _ ) ->
             ( model, Cmd.none )

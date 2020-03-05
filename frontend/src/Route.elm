@@ -8,6 +8,7 @@ type Route
     = NotFound
     | Greeting
     | Items
+    | About
 
 parseUrl : Url -> Route
 parseUrl url =
@@ -25,6 +26,7 @@ matchRoute =
         ]
 
 
+-- TODO: Fix this method, remove it or use it
 pushUrl : Route -> Nav.Key -> Cmd msg
 pushUrl route navKey =
     routeToString route
@@ -35,10 +37,13 @@ routeToString : Route -> String
 routeToString route =
     case route of
         NotFound ->
-            "/not-found"
+            "not-found"
 
         Greeting ->
-            "/greeting"
+            "greeting"
 
         Items ->
-            "/items"
+            "items"
+
+        About ->
+            "about"
