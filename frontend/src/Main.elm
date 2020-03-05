@@ -1,163 +1,130 @@
 module Main exposing (..)
 
-import Bootstrap.Button as Button exposing (button, onClick)
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Spinner as Spinner
-import Bootstrap.Table as Table
-import Bootstrap.Utilities.Spacing as Spacing
-import Browser
-import Html exposing (Html, div, h1, h3, text, span)
-import Html.Attributes exposing (class)
-import Http
-import Json.Decode as Decode exposing (Decoder, int, string)
-import Json.Decode.Pipeline exposing (required)
-import RemoteData exposing (RemoteData, WebData)
-
-type alias Greeting =
-    { id : GreetingId
-    , content : String
-    }
-
-type GreetingId
-    = GreetingId Int
-
-type alias Model =
-    { greeting : WebData Greeting
-    }
-
-type Msg
-    = FetchGreeting
-    | GreetingReceived (WebData Greeting)
-
-greetingDecoder : Decoder Greeting
-greetingDecoder =
-    Decode.succeed Greeting
-        |> required "id" idDecoder
-        |> required "content" string
+import Browser exposing (Document, UrlRequest)
+import Browser.Navigation as Nav
+import Html exposing (Html, h3, text)
+import Route exposing (Route)
+import Greeting
+import Url exposing (Url)
 
 
-idDecoder : Decoder GreetingId
-idDecoder =
-    Decode.map GreetingId int
-
-
-idToString : GreetingId -> String
-idToString (GreetingId id) =
-    String.fromInt id
-
-view : Model -> Html Msg
+view : Model -> Document Msg
 view model =
-    Grid.container []
-        [ Grid.row []
-            [ Grid.col [ Col.md6, Col.offsetMd3 ]
-                [ h1 [ class "text-center" ] [ text "Greeting view" ]]
-            ]
-        , Grid.row []
-            [ Grid.col [ Col.md6, Col.offsetMd3 ]
-                [ button [ onClick FetchGreeting, Button.large, Button.primary, Button.attrs [ Spacing.m1 ]]
-                    [ text "Refresh posts" ]]
-            ]
-        , Grid.row []
-            [ Grid.col [ Col.md6, Col.offsetMd3 ]
-                [ viewGreetingOrError model ]
-            ]
-        ]
+    { title = "VG Primer App"
+    , body = [ currentView model ]
+    }
+
+currentView : Model -> Html Msg
+currentView model =
+    case model.page of
+        NotFoundPage ->
+            notFoundView
+
+        GreetingPage pageModel ->
+            Greeting.view pageModel
+                |> Html.map GreetingMsg
+
+notFoundView : Html msg
+notFoundView =
+    h3 [] [ text "Oops! The page you requested was not found!" ]
 
 
-viewGreetingOrError : Model -> Html Msg
-viewGreetingOrError model =
-    case model.greeting of
-        RemoteData.NotAsked ->
-            text ""
-
-        RemoteData.Loading ->
-            div []
-                [ Spinner.spinner [ Spinner.large ] [ span [ class "sr-only"]  [ text "Loading..."] ] ]
-
-        RemoteData.Success greeting ->
-            viewGreeting greeting
-
-        RemoteData.Failure httpError ->
-            viewError (buildErrorMessage httpError)
-
-viewGreeting : Greeting -> Html Msg
-viewGreeting greeting =
-    div []
-        [ Table.simpleTable
-            ( Table.simpleThead
-                [ Table.th [] [ text "ID" ]
-                , Table.th [] [ text "Greeting" ]
-                ]
-                , Table.tbody []
-                    [ Table.tr []
-                        [ Table.td []
-                             [ text (idToString greeting.id) ]
-                        , Table.td []
-                             [ text (greeting.content) ]
-                        ]
-                    ]
-            )
-        ]
-
-viewError : String -> Html Msg
-viewError errorMessage =
-    let
-        errorHeading =
-            "Couldn't fetch data at this time."
-    in
-    div []
-        [ h3 [] [ text errorHeading ]
-        , text ("Error: " ++ errorMessage)
-        ]
-
-
-buildErrorMessage : Http.Error -> String
-buildErrorMessage httpError =
-    case httpError of
-        Http.BadUrl message ->
-            message
-
-        Http.Timeout ->
-            "Server is taking too long to respond. Please try again later."
-
-        Http.NetworkError ->
-            "Unable to reach server."
-
-        Http.BadStatus statusCode ->
-            "Request failed with status code: " ++ String.fromInt statusCode
-
-        Http.BadBody message ->
-            message
-
-fetchPosts : Cmd Msg
-fetchPosts =
-    Http.get
-        { url = "/api/greeting"
-        , expect =
-            greetingDecoder
-                |> Http.expectJson (RemoteData.fromResult >> GreetingReceived)
-        }
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        FetchGreeting ->
-            ( { model | greeting = RemoteData.Loading }, fetchPosts )
-
-        GreetingReceived response ->
-            ( { model | greeting = response }, Cmd.none )
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { greeting = RemoteData.Loading }, fetchPosts )
 
 main : Program () Model Msg
 main =
-    Browser.element
+    Browser.application
         { init = init
         , view = view
         , update = update
         , subscriptions = \_ -> Sub.none
+        , onUrlRequest = LinkClicked
+        , onUrlChange = UrlChanged
         }
+
+type alias Model =
+    { route : Route
+    , page : Page
+    , navKey : Nav.Key
+    }
+
+type Page
+    = NotFoundPage
+    | GreetingPage Greeting.Model
+
+
+type Msg
+    = GreetingMsg Greeting.Msg
+    | LinkClicked UrlRequest
+    | UrlChanged Url
+
+init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init _ url navKey =
+    let
+        model =
+            { route = Route.parseUrl url
+            , page = NotFoundPage
+            , navKey = navKey
+            }
+    in
+    initCurrentPage ( model, Cmd.none )
+
+initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+initCurrentPage ( model, existingCmds ) =
+    let
+        ( currentPage, mappedPageCmds ) =
+            case model.route of
+                Route.NotFound ->
+                    ( NotFoundPage, Cmd.none )
+
+                Route.Greeting ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Greeting.init
+                    in
+                    ( GreetingPage pageModel, Cmd.map GreetingMsg pageCmds )
+
+                -- Refactor to point to ItemsPage
+                Route.Items ->
+                    ( NotFoundPage, Cmd.none )
+
+    in
+    ( { model | page = currentPage }
+    , Cmd.batch [ existingCmds, mappedPageCmds ]
+    )
+
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case ( msg, model.page ) of
+        ( GreetingMsg subMsg, GreetingPage pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    Greeting.update subMsg pageModel
+            in
+            ( { model | page = GreetingPage updatedPageModel }
+            , Cmd.map GreetingMsg updatedCmd
+            )
+
+        ( LinkClicked urlRequest, _ ) ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model
+                    , Nav.pushUrl model.navKey (Url.toString url)
+                    )
+
+                Browser.External url ->
+                    ( model
+                    , Nav.load url
+                    )
+
+        ( UrlChanged url, _ ) ->
+            let
+                newRoute =
+                    Route.parseUrl url
+            in
+            ( { model | route = newRoute }, Cmd.none )
+                |> initCurrentPage
+
+        ( _, _ ) ->
+            ( model, Cmd.none )
