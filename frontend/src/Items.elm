@@ -35,24 +35,28 @@ type alias ItemsResponse =
     }
 
 type alias Model =
-    { items : WebData ItemsResponse
+    { itemsResponse : WebData ItemsResponse
+    , deleteError : Maybe String
     }
 
 type Msg
     = FetchItems
     | ItemsReceived (WebData ItemsResponse)
+    | DeleteItem ItemId
+    | ItemDeleted (Result Http.Error String)
 
 init : ( Model, Cmd Msg )
 init =
-    ( initialModel, fetchPosts )
+    ( initialModel, fetchItems )
 
 initialModel : Model
 initialModel =
-    { items = RemoteData.Loading
+    { itemsResponse = RemoteData.Loading
+    , deleteError = Nothing
     }
 
-fetchPosts : Cmd Msg
-fetchPosts =
+fetchItems : Cmd Msg
+fetchItems =
     Http.get
         { url = "/api/items"
         , expect =
@@ -60,6 +64,18 @@ fetchPosts =
                 |> Http.expectJson (RemoteData.fromResult >> ItemsReceived)
         }
 
+
+deleteItem : ItemId -> Cmd Msg
+deleteItem itemId =
+    Http.request
+        { method = "DELETE"
+        , headers = []
+        , url = "/api/items/" ++ (idToString itemId)
+        , body = Http.emptyBody
+        , expect = Http.expectString ItemDeleted
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 itemsResponseDecoder : Decoder ItemsResponse
 itemsResponseDecoder =
@@ -87,10 +103,21 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         FetchItems ->
-            ( { model | items = RemoteData.Loading }, fetchPosts )
+            ( { model | itemsResponse = RemoteData.Loading }, fetchItems )
 
         ItemsReceived response ->
-            ( { model | items = response }, Cmd.none )
+            ( { model | itemsResponse = response }, Cmd.none )
+
+        DeleteItem itemId ->
+            ( model, deleteItem itemId )
+
+        ItemDeleted (Ok _) ->
+            ( model, fetchItems )
+
+        ItemDeleted (Err error) ->
+            ( { model | deleteError = Just (buildErrorMessage error) }
+            , Cmd.none
+            )
 
 idDecoder : Decoder ItemId
 idDecoder =
@@ -124,7 +151,7 @@ view model =
 
 viewItemsOrError : Model -> Html Msg
 viewItemsOrError model =
-    case model.items of
+    case model.itemsResponse of
         RemoteData.NotAsked ->
             text ""
 
@@ -156,9 +183,11 @@ viewItem : Item -> Row Msg
 viewItem item =
     Table.tr []
         [ Table.td []
-             [ text item.name ]
+            [ text item.name ]
         , Table.td []
-             [ text item.description ]
+            [ text item.description ]
+        , Table.td []
+            [ button [onClick (DeleteItem item.id), Button.large, Button.primary ] [text "Delete"]]
         ]
 
 -- TODO: Refactor - this functions should go to errors module
