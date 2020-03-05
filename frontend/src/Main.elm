@@ -198,6 +198,7 @@ initCurrentPage ( model, existingCmds ) =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
+        --TODO: remove logging in production
         _ = Debug.log "Msg: " msg
         _ = Debug.log "Model: " model
     in
