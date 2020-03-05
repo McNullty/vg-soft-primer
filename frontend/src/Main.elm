@@ -28,7 +28,8 @@ menu model =
         |> NavBar.container
         |> NavBar.brand [ href "#" ] [ text "Elm Stopwatch" ]
         |> NavBar.items
-            [ NavBar.itemLink [ href "#about" ] [ text "About" ]
+            [ NavBar.itemLink [ href "#items" ] [ text "Items" ]
+            , NavBar.itemLink [ href "#about" ] [ text "About" ]
             ]
         |> NavBar.view model.navState
 
@@ -45,6 +46,9 @@ currentView model =
         AboutPage ->
             aboutView
 
+        ItemsPage ->
+            itemsView
+
 notFoundView : Html msg
 notFoundView =
     h3 [] [ text "Oops! The page you requested was not found!" ]
@@ -56,6 +60,12 @@ aboutView  =
         , text "TODO: About VG soft and link to repo"
         ]
 
+itemsView : Html Msg
+itemsView  =
+    div []
+        [ h1 [] [ text "Items" ]
+        , text "TODO: Items View"
+        ]
 
 main : Program () Model Msg
 main =
@@ -79,6 +89,7 @@ type alias Model =
 type Page
     = NotFoundPage
     | GreetingPage Greeting.Model
+    | ItemsPage
     | AboutPage
 
 
@@ -132,6 +143,9 @@ urlUpdate url model =
                 Route.About ->
                     ( { model | page = AboutPage }, Cmd.none)
 
+                Route.Items ->
+                    ( { model | page = ItemsPage }, Cmd.none)
+
                 _ ->
                     (model, Cmd.none)
 
@@ -146,6 +160,7 @@ routeParser =
     UrlParser.oneOf
         [ UrlParser.map Route.Greeting top
         , UrlParser.map Route.About (s "about")
+        , UrlParser.map Route.Items (s "items")
         ]
 
 initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -163,13 +178,11 @@ initCurrentPage ( model, existingCmds ) =
                     in
                     ( GreetingPage pageModel, Cmd.map GreetingMsg pageCmds )
 
-                -- TODO: Refactor to point to ItemsPage
                 Route.Items ->
-                    ( NotFoundPage, Cmd.none )
+                    ( ItemsPage, Cmd.none )
 
-                -- TODO: Refactor to point to ItemsPage
                 Route.About ->
-                    ( NotFoundPage, Cmd.none )
+                    ( AboutPage, Cmd.none )
 
     in
     ( { model | page = currentPage }
