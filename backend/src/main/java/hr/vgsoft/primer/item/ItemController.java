@@ -3,6 +3,8 @@ package hr.vgsoft.primer.item;
 import java.util.Optional;
 import java.util.UUID;
 
+import javax.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
@@ -47,7 +49,7 @@ public class ItemController {
   }
 
   @PostMapping
-  public ResponseEntity<?> newItem(@RequestBody final NewItemModel newItemModel) {
+  public ResponseEntity<?> newItem(@RequestBody @Valid final NewItemModel newItemModel) {
 
     Item item = itemService.newItem(newItemModel);
 
@@ -74,7 +76,7 @@ public class ItemController {
 
   @PutMapping(value = "/{itemUuid}")
   public ResponseEntity<?> updateItem(
-          @PathVariable final UUID itemUuid, @RequestBody final ItemModel updateItem) {
+          @PathVariable final UUID itemUuid, @RequestBody @Valid final ItemModel updateItem) {
 
     itemService.updateItem(itemUuid, updateItem);
 
