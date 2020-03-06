@@ -1,5 +1,6 @@
 module Items exposing (..)
 
+import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
@@ -7,20 +8,13 @@ import Bootstrap.Spinner as Spinner
 import Bootstrap.Table as Table exposing (Row)
 import Bootstrap.Utilities.Spacing as Spacing
 import Html exposing (Html, div, h1, h3, span, text)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, href)
 import Http
-import Json.Decode as Decode exposing (Decoder, int, list, string)
+import Item exposing (Item, ItemId, idToString, itemDecoder)
+import Json.Decode as Decode exposing (Decoder, int, list)
 import Json.Decode.Pipeline exposing (required, requiredAt)
 import RemoteData exposing (WebData)
 
-type ItemId
-    = ItemId String
-
-type alias Item =
-    { id : ItemId
-    , name : String
-    , description : String
-    }
 
 type alias Page =
     { size : Int
@@ -84,13 +78,6 @@ itemsResponseDecoder =
         |> requiredAt ["page"] pageDecoder
 
 
-itemDecoder : Decoder Item
-itemDecoder =
-   Decode.succeed Item
-        |> required "id" idDecoder
-        |> required "name" string
-        |> required "description" string
-
 pageDecoder : Decoder Page
 pageDecoder =
     Decode.succeed Page
@@ -119,14 +106,6 @@ update msg model =
             , Cmd.none
             )
 
-idDecoder : Decoder ItemId
-idDecoder =
-    Decode.map ItemId string
-
-
-idToString : ItemId -> String
-idToString (ItemId id) =
-    id
 
 -- VIEWS
 
@@ -140,7 +119,9 @@ view model =
         , Grid.row []
             [ Grid.col [ Col.md6, Col.offsetMd3 ]
                 [ button [ onClick FetchItems, Button.large, Button.primary, Button.attrs [ Spacing.m1 ]]
-                    [ text "Refresh items" ]]
+                    [ text "Refresh items" ]
+                , Alert.link [href "#items/new"] [text "Create new Item"]
+                ]
             ]
         , Grid.row []
             [ Grid.col [ Col.md6, Col.offsetMd3 ]

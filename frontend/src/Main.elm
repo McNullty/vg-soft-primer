@@ -6,6 +6,7 @@ import Browser.Navigation as Nav
 import Html exposing (Html, div, h1, h3, text)
 import Html.Attributes exposing (href)
 import Items
+import NewItem
 import Route exposing (Route)
 import Greeting
 import Url exposing (Url)
@@ -51,6 +52,10 @@ currentView model =
             Items.view itemsModel
                 |> Html.map ItemsMsg
 
+        NewItemPage itemsModel ->
+            NewItem.view itemsModel
+                |> Html.map NewItemPageMsg
+
 notFoundView : Html msg
 notFoundView =
     h3 [] [ text "Oops! The page you requested was not found!" ]
@@ -85,6 +90,7 @@ type Page
     = NotFoundPage
     | GreetingPage Greeting.Model
     | ItemsPage Items.Model
+    | NewItemPage NewItem.Model
     | AboutPage
 
 
@@ -92,6 +98,7 @@ type Page
 type Msg
     = GreetingMsg Greeting.Msg
     | ItemsMsg Items.Msg
+    | NewItemPageMsg NewItem.Msg
     | LinkClicked UrlRequest
     | UrlChanged Url
     | NavMsg NavBar.State
@@ -141,10 +148,17 @@ urlUpdate url model =
 
                 Route.Items ->
                     let
-                        ( itemsModel, itemsCmds ) =
+                        ( pageModel, pageCmds ) =
                             Items.init
                     in
-                    ( { model | page = (ItemsPage itemsModel) }, Cmd.map ItemsMsg itemsCmds)
+                    ( { model | page = (ItemsPage pageModel) }, Cmd.map ItemsMsg pageCmds)
+
+                Route.NewItem ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            NewItem.init model.navKey
+                    in
+                    ( { model | page = (NewItemPage pageModel) }, Cmd.map NewItemPageMsg pageCmds )
 
                 _ ->
                     (model, Cmd.none)
@@ -161,6 +175,7 @@ routeParser =
         [ UrlParser.map Route.Greeting top
         , UrlParser.map Route.About (s "about")
         , UrlParser.map Route.Items (s "items")
+        , UrlParser.map Route.NewItem (s "items" </> s "new")
         ]
 
 initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -184,6 +199,13 @@ initCurrentPage ( model, existingCmds ) =
                             Items.init
                     in
                     ( ItemsPage pageModel, Cmd.map ItemsMsg pageCmds )
+
+                Route.NewItem ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            NewItem.init model.navKey
+                    in
+                    ( NewItemPage pageModel, Cmd.map NewItemPageMsg pageCmds )
 
                 Route.About ->
                     ( AboutPage, Cmd.none )
@@ -239,6 +261,15 @@ update msg model =
             in
             ( { model | page = ItemsPage updatedPageModel }
             , Cmd.map ItemsMsg updatedCmd
+            )
+
+        ( NewItemPageMsg subMsg, NewItemPage pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    NewItem.update subMsg pageModel
+            in
+            ( { model | page = NewItemPage updatedPageModel }
+            , Cmd.map NewItemPageMsg updatedCmd
             )
 
         ( _, _ ) ->

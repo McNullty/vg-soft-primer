@@ -8,6 +8,7 @@ type Route
     = NotFound
     | Greeting
     | Items
+    | NewItem
     | About
 
 parseUrl : Url -> Route
@@ -44,6 +45,9 @@ routeToString route =
 
         Items ->
             "items"
+
+        NewItem ->
+            "items/new"
 
         About ->
             "about"
