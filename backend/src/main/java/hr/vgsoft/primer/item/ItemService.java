@@ -13,7 +13,7 @@ public interface ItemService {
 
   Item newItem(final NewItemModel itemModel);
 
-  void updateItem(UUID itemUuid, ItemModel updateItem);
+  void updateItem(UUID itemUuid, NewItemModel updateItem);
 
   void deleteItem(UUID itemUuid);
 }

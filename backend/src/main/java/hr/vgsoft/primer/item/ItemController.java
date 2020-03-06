@@ -76,7 +76,7 @@ public class ItemController {
 
   @PutMapping(value = "/{itemUuid}")
   public ResponseEntity<?> updateItem(
-          @PathVariable final UUID itemUuid, @RequestBody @Valid final ItemModel updateItem) {
+          @PathVariable final UUID itemUuid, @RequestBody @Valid final NewItemModel updateItem) {
 
     itemService.updateItem(itemUuid, updateItem);
 

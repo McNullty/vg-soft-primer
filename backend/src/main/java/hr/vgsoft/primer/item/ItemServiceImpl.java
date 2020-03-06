@@ -1,6 +1,5 @@
 package hr.vgsoft.primer.item;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -38,7 +37,7 @@ public class ItemServiceImpl implements ItemService {
   }
 
   @Override
-  public void updateItem(final UUID uuid, final ItemModel updateItem) {
+  public void updateItem(final UUID uuid, final NewItemModel updateItem) {
 
     final Item item =
             itemRepository.findById(uuid).orElseThrow(() -> new ItemNotFoundException(uuid));
