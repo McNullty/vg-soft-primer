@@ -38,16 +38,16 @@ routeToString : Route -> String
 routeToString route =
     case route of
         NotFound ->
-            "not-found"
+            "#not-found"
 
         Greeting ->
-            "greeting"
+            "#greeting"
 
         Items ->
-            "items"
+            "#items"
 
         NewItem ->
-            "items/new"
+            "#items/new"
 
         About ->
-            "about"
+            "#about"
