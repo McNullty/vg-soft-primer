@@ -94,7 +94,7 @@ createItem item =
     Http.post
         { url = "/api/items"
         , body = Http.jsonBody (newItemEncoder item)
-        , expect = Http.expectStringResponse ItemCreated (\_ -> Ok "OK")
+        , expect = Http.expectString ItemCreated
         }
 
 
