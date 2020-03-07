@@ -6,12 +6,12 @@ import Browser.Navigation as Nav
 import Pages.Items.EditItem as EditItem
 import Html exposing (Html, div, h1, h3, text)
 import Html.Attributes exposing (href)
-import Pages.Items.Items as Items
+import Pages.Items.ListItems as Items
 import Pages.Items.NewItem as NewItem
-import Route exposing (Route, routeParser)
+import Route exposing (Route, decode)
 import Pages.Greeting.Greeting as Greeting
 import Url exposing (Url)
-import Url.Parser as UrlParser exposing ((</>), Parser)
+
 
 type alias Model =
     { route : Route
@@ -20,22 +20,26 @@ type alias Model =
     , navState : NavBar.State
     }
 
-
+{-| This is Type with all pages. Every new page should be added here.
+-}
 type Page
     = NotFoundPage
+    | AboutPage
     | GreetingPage Greeting.Model
-    | ItemsPage Items.Model
+    | ListItemsPage Items.Model
     | NewItemPage NewItem.Model
     | ItemPage EditItem.Model
-    | AboutPage
 
 
 
+{-| This is Type with all messages for every page. Every new page message should be added here.
+-}
 type Msg
-    = GreetingMsg Greeting.Msg
-    | ItemsMsg Items.Msg
+    = GreetingPageMsg Greeting.Msg
+    | ListItemsPageMsg Items.Msg
     | NewItemPageMsg NewItem.Msg
     | ItemPageMsg EditItem.Msg
+    --------------
     | LinkClicked UrlRequest
     | UrlChanged Url
     | NavMsg NavBar.State
@@ -53,14 +57,16 @@ main =
         }
 
 
-
+{-| Subscription method. Here I will add timer that will send Msg that will trigger checking commands results.
+-}
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ NavBar.subscriptions model.navState NavMsg
         ]
 
-
+{-| Main init method that calls init methods of specific views
+-}
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url navKey =
     let
@@ -78,9 +84,61 @@ init _ url navKey =
     initCurrentPage ( model, Cmd.batch [ urlCmd, navCmd ] )
 
 
+{-| Helper function that calls init function for every view. For every new view init method should be added to
+ theirs function.
+ This function sets model.page to right Page Type.
+-}
+initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+initCurrentPage ( model, existingCommands ) =
+    let
+        ( currentPage, mappedPageCommands ) =
+            case model.route of
+                Route.NotFound ->
+                    ( NotFoundPage, Cmd.none )
+
+                Route.Greeting ->
+                    let
+                        ( pageModel, pageCommands ) =
+                            Greeting.init
+                    in
+                    ( GreetingPage pageModel, Cmd.map GreetingPageMsg pageCommands )
+
+                Route.Items ->
+                    let
+                        ( pageModel, pageCommands ) =
+                            Items.init
+                    in
+                    ( ListItemsPage pageModel, Cmd.map ListItemsPageMsg pageCommands )
+
+                Route.NewItem ->
+                    let
+                        ( pageModel, pageCommands ) =
+                            NewItem.init model.navKey
+                    in
+                    ( NewItemPage pageModel, Cmd.map NewItemPageMsg pageCommands )
+
+                Route.Item itemId ->
+                    let
+                        ( pageModel, pageCommands ) =
+                            EditItem.init itemId model.navKey
+                    in
+                    ( ItemPage pageModel, Cmd.map ItemPageMsg pageCommands)
+
+                Route.About ->
+                    ( AboutPage, Cmd.none )
+
+    in
+    ( { model | page = currentPage }
+    , Cmd.batch [ existingCommands, mappedPageCommands ]
+    )
+
+
+{-| This method decodes URL and initializes view depending on URL. This is basically frontend routing.
+ This function sets model.page to right Page Type.
+-}
 urlUpdate : Url -> Model -> ( Model, Cmd Msg )
 urlUpdate url model =
-    case decode url of
+    case (decode url) of
         Nothing ->
             ( { model | page = NotFoundPage }, Cmd.none )
 
@@ -88,92 +146,42 @@ urlUpdate url model =
             case route of
                 Route.Greeting ->
                     let
-                        ( pageModel, pageCmds ) =
+                        ( pageModel, pageCommands ) =
                             Greeting.init
                     in
-                    ( { model | page = (GreetingPage pageModel) }, Cmd.map GreetingMsg pageCmds)
+                    ( { model | page = (GreetingPage pageModel) }, Cmd.map GreetingPageMsg pageCommands)
 
                 Route.About ->
                     ( { model | page = AboutPage }, Cmd.none)
 
                 Route.Items ->
                     let
-                        ( pageModel, pageCmds ) =
+                        ( pageModel, pageCommands ) =
                             Items.init
                     in
-                    ( { model | page = (ItemsPage pageModel) }, Cmd.map ItemsMsg pageCmds)
+                    ( { model | page = (ListItemsPage pageModel) }, Cmd.map ListItemsPageMsg pageCommands)
 
                 Route.NewItem ->
                     let
-                        ( pageModel, pageCmds ) =
+                        ( pageModel, pageCommands ) =
                             NewItem.init model.navKey
                     in
-                    ( { model | page = (NewItemPage pageModel) }, Cmd.map NewItemPageMsg pageCmds )
+                    ( { model | page = (NewItemPage pageModel) }, Cmd.map NewItemPageMsg pageCommands )
 
                 Route.Item itemId ->
                     let
-                        ( pageModel, pageCmds ) =
+                        ( pageModel, pageCommands ) =
                             EditItem.init itemId model.navKey
                     in
-                    ( { model | page = (ItemPage pageModel) }, Cmd.map ItemPageMsg pageCmds )
+                    ( { model | page = (ItemPage pageModel) }, Cmd.map ItemPageMsg pageCommands )
 
                 _ ->
                     (model, Cmd.none)
 
 
-decode : Url -> Maybe Route
-decode url =
-    { url | path = Maybe.withDefault "" url.fragment, fragment = Nothing }
-    |> UrlParser.parse routeParser
+{-| This function handles every change in model and calls appropriate update function of current page.
 
-
-
-initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-initCurrentPage ( model, existingCmds ) =
-    let
-        ( currentPage, mappedPageCmds ) =
-            case model.route of
-                Route.NotFound ->
-                    ( NotFoundPage, Cmd.none )
-
-                Route.Greeting ->
-                    let
-                        ( pageModel, pageCmds ) =
-                            Greeting.init
-                    in
-                    ( GreetingPage pageModel, Cmd.map GreetingMsg pageCmds )
-
-                Route.Items ->
-                    let
-                        ( pageModel, pageCmds ) =
-                            Items.init
-                    in
-                    ( ItemsPage pageModel, Cmd.map ItemsMsg pageCmds )
-
-                Route.NewItem ->
-                    let
-                        ( pageModel, pageCmds ) =
-                            NewItem.init model.navKey
-                    in
-                    ( NewItemPage pageModel, Cmd.map NewItemPageMsg pageCmds )
-
-                Route.Item itemId ->
-                    let
-                        ( pageModel, pageCmds ) =
-                            EditItem.init itemId model.navKey
-                    in
-                    ( ItemPage pageModel, Cmd.map ItemPageMsg pageCmds)
-
-                Route.About ->
-                    ( AboutPage, Cmd.none )
-
-    in
-    ( { model | page = currentPage }
-    , Cmd.batch [ existingCmds, mappedPageCmds ]
-    )
-
-
-
+-}
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
@@ -202,22 +210,24 @@ update msg model =
             , Cmd.none
             )
 
-        ( GreetingMsg subMsg, GreetingPage pageModel ) ->
+        ------- Page specific update functions
+
+        ( GreetingPageMsg subMsg, GreetingPage pageModel ) ->
             let
                 ( updatedPageModel, updatedCmd ) =
                     Greeting.update subMsg pageModel
             in
             ( { model | page = GreetingPage updatedPageModel }
-            , Cmd.map GreetingMsg updatedCmd
+            , Cmd.map GreetingPageMsg updatedCmd
             )
 
-        ( ItemsMsg subMsg, ItemsPage pageModel ) ->
+        ( ListItemsPageMsg subMsg, ListItemsPage pageModel ) ->
             let
                 ( updatedPageModel, updatedCmd ) =
                     Items.update subMsg pageModel
             in
-            ( { model | page = ItemsPage updatedPageModel }
-            , Cmd.map ItemsMsg updatedCmd
+            ( { model | page = ListItemsPage updatedPageModel }
+            , Cmd.map ListItemsPageMsg updatedCmd
             )
 
         ( NewItemPageMsg subMsg, NewItemPage pageModel ) ->
@@ -238,6 +248,7 @@ update msg model =
             , Cmd.map ItemPageMsg updatedCmd
             )
 
+        -- This branch handles all combinations of Msg and Page type that are not possible
         ( _, _ ) ->
             ( model, Cmd.none )
 
@@ -279,14 +290,14 @@ currentView model =
 
         GreetingPage pageModel ->
             Greeting.view pageModel
-                |> Html.map GreetingMsg
+                |> Html.map GreetingPageMsg
 
         AboutPage ->
             aboutView
 
-        ItemsPage itemsModel ->
+        ListItemsPage itemsModel ->
             Items.view itemsModel
-                |> Html.map ItemsMsg
+                |> Html.map ListItemsPageMsg
 
         NewItemPage itemsModel ->
             NewItem.view itemsModel

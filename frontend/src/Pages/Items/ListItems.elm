@@ -1,4 +1,4 @@
-module Pages.Items.Items exposing (..)
+module Pages.Items.ListItems exposing (..)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)

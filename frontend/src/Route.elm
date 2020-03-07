@@ -1,4 +1,4 @@
-module Route exposing (Route(..), parseUrl, routeParser, pushUrl)
+module Route exposing (Route(..), parseUrl, routeParser, pushUrl, decode)
 
 import Browser.Navigation as Nav
 import Pages.Items.Item as Item exposing (ItemId)
@@ -31,6 +31,13 @@ routeParser =
         , UrlParser.map NewItem (s "items" </> s "new")
         , UrlParser.map Item (s "items" </> Item.idParser)
         ]
+
+
+decode : Url -> Maybe Route
+decode url =
+    { url | path = Maybe.withDefault "" url.fragment, fragment = Nothing }
+    |> UrlParser.parse routeParser
+
 
 
 pushUrl : Route -> Nav.Key -> Cmd msg
