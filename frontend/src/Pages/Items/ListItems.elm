@@ -152,7 +152,7 @@ viewItemsOrError model =
             viewItems itemsResponse
 
         RemoteData.Failure httpError ->
-            viewError (buildErrorMessage httpError)
+            viewFetchError (buildErrorMessage httpError)
 
 
 viewItems : ItemsResponse -> Html Msg
@@ -181,9 +181,8 @@ viewItem item =
             [ button [onClick (DeleteItem item.id), Button.large, Button.primary ] [text "Delete"]]
         ]
 
--- TODO: Refactor - this functions should go to errors module
-viewError : String -> Html Msg
-viewError errorMessage =
+viewFetchError : String -> Html Msg
+viewFetchError errorMessage =
     let
         errorHeading =
             "Couldn't fetch data at this time."

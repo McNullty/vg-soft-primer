@@ -122,12 +122,12 @@ view model =
     div []
         [ h1 [ class "text-center" ] [ text "Create New Item" ]
         , newItemForm
-        , viewError model.createError
+        , viewCreateError model.createError
         ]
 
 
-viewError : Maybe String -> Html msg
-viewError maybeError =
+viewCreateError : Maybe String -> Html msg
+viewCreateError maybeError =
     case maybeError of
         Just error ->
             div []
