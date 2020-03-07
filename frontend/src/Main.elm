@@ -6,13 +6,12 @@ import Browser.Navigation as Nav
 import Pages.Items.EditItem as EditItem
 import Html exposing (Html, div, h1, h3, text)
 import Html.Attributes exposing (href)
-import Pages.Items.Item as Item
 import Pages.Items.Items as Items
 import Pages.Items.NewItem as NewItem
-import Route exposing (Route)
+import Route exposing (Route, routeParser)
 import Pages.Greeting.Greeting as Greeting
 import Url exposing (Url)
-import Url.Parser as UrlParser exposing ((</>), Parser, s, top)
+import Url.Parser as UrlParser exposing ((</>), Parser)
 
 type alias Model =
     { route : Route
@@ -77,16 +76,6 @@ init _ url navKey =
                 }
     in
     initCurrentPage ( model, Cmd.batch [ urlCmd, navCmd ] )
-
-routeParser : Parser (Route -> a) a
-routeParser =
-    UrlParser.oneOf
-        [ UrlParser.map Route.Greeting top
-        , UrlParser.map Route.About (s "about")
-        , UrlParser.map Route.Items (s "items")
-        , UrlParser.map Route.NewItem (s "items" </> s "new")
-        , UrlParser.map Route.Item (s "items" </> Item.idParser)
-        ]
 
 
 urlUpdate : Url -> Model -> ( Model, Cmd Msg )
