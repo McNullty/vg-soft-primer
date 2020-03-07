@@ -1,6 +1,5 @@
 package hr.vgsoft.primer.item;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -8,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @Service
 public class ItemServiceImpl implements ItemService {
 
@@ -37,8 +37,9 @@ public class ItemServiceImpl implements ItemService {
     return itemRepository.save(item);
   }
 
+
   @Override
-  public void updateItem(final UUID uuid, final ItemModel updateItem) {
+  public void updateItem(final UUID uuid, final NewItemModel updateItem) {
 
     final Item item =
             itemRepository.findById(uuid).orElseThrow(() -> new ItemNotFoundException(uuid));

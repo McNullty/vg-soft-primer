@@ -12,10 +12,12 @@ import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 @Value
 @Relation(value = "item", collectionRelation = "items")
 public class ItemModel extends RepresentationModel<ItemModel> {
-  private final String name;
-  private final String description;
+  String id;
+  String name;
+  String description;
 
   public ItemModel(final Item item) {
+    this.id = item.getUuid().toString();
     this.name = item.getName();
     this.description = item.getDescription();
 

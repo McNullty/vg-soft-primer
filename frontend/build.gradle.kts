@@ -40,12 +40,10 @@ tasks.register<Delete>("clean") {
 }
 
 tasks.register<Copy>("copyElmApp") {
-    val elmMake by tasks.getting
     val copyIndexHtml by tasks.getting
 
     val processResources by project(":backend").tasks.existing(ProcessResources::class)
 
-    from(elmMake.outputs)
     from(copyIndexHtml.outputs)
     into(processResources.get().destinationDir.toString() + "/public")
 

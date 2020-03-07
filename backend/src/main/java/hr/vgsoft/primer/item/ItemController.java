@@ -3,6 +3,8 @@ package hr.vgsoft.primer.item;
 import java.util.Optional;
 import java.util.UUID;
 
+import javax.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
@@ -14,6 +16,7 @@ import org.springframework.hateoas.server.ExposesResourceFor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,7 +49,7 @@ public class ItemController {
   }
 
   @PostMapping
-  public ResponseEntity<?> newItem(@RequestBody final NewItemModel newItemModel) {
+  public ResponseEntity<?> newItem(@RequestBody @Valid final NewItemModel newItemModel) {
 
     Item item = itemService.newItem(newItemModel);
 
@@ -73,7 +76,7 @@ public class ItemController {
 
   @PutMapping(value = "/{itemUuid}")
   public ResponseEntity<?> updateItem(
-          @PathVariable final UUID itemUuid, @RequestBody final ItemModel updateItem) {
+          @PathVariable final UUID itemUuid, @RequestBody @Valid final NewItemModel updateItem) {
 
     itemService.updateItem(itemUuid, updateItem);
 
@@ -81,6 +84,7 @@ public class ItemController {
     return ResponseEntity.ok().build();
   }
 
+  @DeleteMapping(value = "/{itemUuid}")
   public ResponseEntity<?> deleteItem(@PathVariable final UUID itemUuid) {
 
     itemService.deleteItem(itemUuid);

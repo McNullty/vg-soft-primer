@@ -1,163 +1,319 @@
 module Main exposing (..)
 
-import Bootstrap.Button as Button exposing (button, onClick)
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Spinner as Spinner
-import Bootstrap.Table as Table
-import Bootstrap.Utilities.Spacing as Spacing
-import Browser
-import Html exposing (Html, div, h1, h3, text, span)
-import Html.Attributes exposing (class)
-import Http
-import Json.Decode as Decode exposing (Decoder, int, string)
-import Json.Decode.Pipeline exposing (required)
-import RemoteData exposing (RemoteData, WebData)
-
-type alias Greeting =
-    { id : GreetingId
-    , content : String
-    }
-
-type GreetingId
-    = GreetingId Int
+import Bootstrap.Navbar as NavBar
+import Browser exposing (Document, UrlRequest)
+import Browser.Navigation as Nav
+import EditItem
+import Html exposing (Html, div, h1, h3, text)
+import Html.Attributes exposing (href)
+import Item
+import Items
+import NewItem
+import Route exposing (Route)
+import Greeting
+import Url exposing (Url)
+import Url.Parser as UrlParser exposing ((</>), Parser, s, top)
 
 type alias Model =
-    { greeting : WebData Greeting
+    { route : Route
+    , page : Page
+    , navKey : Nav.Key
+    , navState : NavBar.State
     }
 
+
+type Page
+    = NotFoundPage
+    | GreetingPage Greeting.Model
+    | ItemsPage Items.Model
+    | NewItemPage NewItem.Model
+    | ItemPage EditItem.Model
+    | AboutPage
+
+
+
 type Msg
-    = FetchGreeting
-    | GreetingReceived (WebData Greeting)
+    = GreetingMsg Greeting.Msg
+    | ItemsMsg Items.Msg
+    | NewItemPageMsg NewItem.Msg
+    | ItemPageMsg EditItem.Msg
+    | LinkClicked UrlRequest
+    | UrlChanged Url
+    | NavMsg NavBar.State
 
-greetingDecoder : Decoder Greeting
-greetingDecoder =
-    Decode.succeed Greeting
-        |> required "id" idDecoder
-        |> required "content" string
-
-
-idDecoder : Decoder GreetingId
-idDecoder =
-    Decode.map GreetingId int
-
-
-idToString : GreetingId -> String
-idToString (GreetingId id) =
-    String.fromInt id
-
-view : Model -> Html Msg
-view model =
-    Grid.container []
-        [ Grid.row []
-            [ Grid.col [ Col.md6, Col.offsetMd3 ]
-                [ h1 [ class "text-center" ] [ text "Greeting view" ]]
-            ]
-        , Grid.row []
-            [ Grid.col [ Col.md6, Col.offsetMd3 ]
-                [ button [ onClick FetchGreeting, Button.large, Button.primary, Button.attrs [ Spacing.m1 ]]
-                    [ text "Refresh posts" ]]
-            ]
-        , Grid.row []
-            [ Grid.col [ Col.md6, Col.offsetMd3 ]
-                [ viewGreetingOrError model ]
-            ]
-        ]
-
-
-viewGreetingOrError : Model -> Html Msg
-viewGreetingOrError model =
-    case model.greeting of
-        RemoteData.NotAsked ->
-            text ""
-
-        RemoteData.Loading ->
-            div []
-                [ Spinner.spinner [ Spinner.large ] [ span [ class "sr-only"]  [ text "Loading..."] ] ]
-
-        RemoteData.Success greeting ->
-            viewGreeting greeting
-
-        RemoteData.Failure httpError ->
-            viewError (buildErrorMessage httpError)
-
-viewGreeting : Greeting -> Html Msg
-viewGreeting greeting =
-    div []
-        [ Table.simpleTable
-            ( Table.simpleThead
-                [ Table.th [] [ text "ID" ]
-                , Table.th [] [ text "Greeting" ]
-                ]
-                , Table.tbody []
-                    [ Table.tr []
-                        [ Table.td []
-                             [ text (idToString greeting.id) ]
-                        , Table.td []
-                             [ text (greeting.content) ]
-                        ]
-                    ]
-            )
-        ]
-
-viewError : String -> Html Msg
-viewError errorMessage =
-    let
-        errorHeading =
-            "Couldn't fetch data at this time."
-    in
-    div []
-        [ h3 [] [ text errorHeading ]
-        , text ("Error: " ++ errorMessage)
-        ]
-
-
-buildErrorMessage : Http.Error -> String
-buildErrorMessage httpError =
-    case httpError of
-        Http.BadUrl message ->
-            message
-
-        Http.Timeout ->
-            "Server is taking too long to respond. Please try again later."
-
-        Http.NetworkError ->
-            "Unable to reach server."
-
-        Http.BadStatus statusCode ->
-            "Request failed with status code: " ++ String.fromInt statusCode
-
-        Http.BadBody message ->
-            message
-
-fetchPosts : Cmd Msg
-fetchPosts =
-    Http.get
-        { url = "/api/greeting"
-        , expect =
-            greetingDecoder
-                |> Http.expectJson (RemoteData.fromResult >> GreetingReceived)
-        }
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        FetchGreeting ->
-            ( { model | greeting = RemoteData.Loading }, fetchPosts )
-
-        GreetingReceived response ->
-            ( { model | greeting = response }, Cmd.none )
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { greeting = RemoteData.Loading }, fetchPosts )
 
 main : Program () Model Msg
 main =
-    Browser.element
+    Browser.application
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
+        , onUrlRequest = LinkClicked
+        , onUrlChange = UrlChanged
         }
+
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ NavBar.subscriptions model.navState NavMsg
+        ]
+
+
+init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init _ url navKey =
+    let
+        ( navState, navCmd ) =
+            NavBar.initialState NavMsg
+
+        ( model, urlCmd ) =
+            urlUpdate url
+                { route = Route.parseUrl url
+                , page = NotFoundPage
+                , navKey = navKey
+                , navState = navState
+                }
+    in
+    initCurrentPage ( model, Cmd.batch [ urlCmd, navCmd ] )
+
+routeParser : Parser (Route -> a) a
+routeParser =
+    UrlParser.oneOf
+        [ UrlParser.map Route.Greeting top
+        , UrlParser.map Route.About (s "about")
+        , UrlParser.map Route.Items (s "items")
+        , UrlParser.map Route.Item (s "items" </> Item.idParser)
+        , UrlParser.map Route.NewItem (s "items" </> s "new")
+        ]
+
+
+urlUpdate : Url -> Model -> ( Model, Cmd Msg )
+urlUpdate url model =
+    case decode url of
+        Nothing ->
+            ( { model | page = NotFoundPage }, Cmd.none )
+
+        Just route ->
+            case route of
+                Route.Greeting ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Greeting.init
+                    in
+                    ( { model | page = (GreetingPage pageModel) }, Cmd.map GreetingMsg pageCmds)
+
+                Route.About ->
+                    ( { model | page = AboutPage }, Cmd.none)
+
+                Route.Items ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Items.init
+                    in
+                    ( { model | page = (ItemsPage pageModel) }, Cmd.map ItemsMsg pageCmds)
+
+                Route.NewItem ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            NewItem.init model.navKey
+                    in
+                    ( { model | page = (NewItemPage pageModel) }, Cmd.map NewItemPageMsg pageCmds )
+
+                Route.Item itemId ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            EditItem.init itemId model.navKey
+                    in
+                    ( { model | page = (ItemPage pageModel) }, Cmd.map ItemPageMsg pageCmds )
+
+                _ ->
+                    (model, Cmd.none)
+
+
+decode : Url -> Maybe Route
+decode url =
+    { url | path = Maybe.withDefault "" url.fragment, fragment = Nothing }
+    |> UrlParser.parse routeParser
+
+
+
+initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+initCurrentPage ( model, existingCmds ) =
+    let
+        ( currentPage, mappedPageCmds ) =
+            case model.route of
+                Route.NotFound ->
+                    ( NotFoundPage, Cmd.none )
+
+                Route.Greeting ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Greeting.init
+                    in
+                    ( GreetingPage pageModel, Cmd.map GreetingMsg pageCmds )
+
+                Route.Items ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Items.init
+                    in
+                    ( ItemsPage pageModel, Cmd.map ItemsMsg pageCmds )
+
+                Route.NewItem ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            NewItem.init model.navKey
+                    in
+                    ( NewItemPage pageModel, Cmd.map NewItemPageMsg pageCmds )
+
+                Route.Item itemId ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            EditItem.init itemId model.navKey
+                    in
+                    ( ItemPage pageModel, Cmd.map ItemPageMsg pageCmds)
+
+                Route.About ->
+                    ( AboutPage, Cmd.none )
+
+    in
+    ( { model | page = currentPage }
+    , Cmd.batch [ existingCmds, mappedPageCmds ]
+    )
+
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    let
+        --TODO: remove logging in production
+        _ = Debug.log "MAIN Msg: " msg
+        _ = Debug.log "MAIN Model: " model
+    in
+    case ( msg, model.page ) of
+        ( LinkClicked urlRequest, _ ) ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model
+                    , Nav.pushUrl model.navKey (Url.toString url)
+                    )
+
+                Browser.External url ->
+                    ( model
+                    , Nav.load url
+                    )
+
+        ( UrlChanged url, _ ) ->
+            urlUpdate url model
+
+        ( NavMsg state, _) ->
+            ( { model | navState = state }
+            , Cmd.none
+            )
+
+        ( GreetingMsg subMsg, GreetingPage pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    Greeting.update subMsg pageModel
+            in
+            ( { model | page = GreetingPage updatedPageModel }
+            , Cmd.map GreetingMsg updatedCmd
+            )
+
+        ( ItemsMsg subMsg, ItemsPage pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    Items.update subMsg pageModel
+            in
+            ( { model | page = ItemsPage updatedPageModel }
+            , Cmd.map ItemsMsg updatedCmd
+            )
+
+        ( NewItemPageMsg subMsg, NewItemPage pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    NewItem.update subMsg pageModel
+            in
+            ( { model | page = NewItemPage updatedPageModel }
+            , Cmd.map NewItemPageMsg updatedCmd
+            )
+
+        ( ItemPageMsg subMsg, ItemPage pageModel) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    EditItem.update subMsg pageModel
+            in
+            ( { model | page = ItemPage updatedPageModel }
+            , Cmd.map ItemPageMsg updatedCmd
+            )
+
+        ( _, _ ) ->
+            ( model, Cmd.none )
+
+--    __      _______ ________          __
+--    \ \    / /_   _|  ____\ \        / /
+--     \ \  / /  | | | |__   \ \  /\  / /
+--      \ \/ /   | | |  __|   \ \/  \/ /
+--       \  /   _| |_| |____   \  /\  /
+--        \/   |_____|______|   \/  \/
+--
+
+view : Model -> Document Msg
+view model =
+    { title = "VG Primer App"
+    , body =
+        [ div []
+            [ menu model
+            , currentView model ]
+        ]
+    }
+
+menu : Model -> Html Msg
+menu model =
+    NavBar.config NavMsg
+        |> NavBar.withAnimation
+        |> NavBar.container
+        |> NavBar.brand [ href "#" ] [ text "Elm Stopwatch" ]
+        |> NavBar.items
+            [ NavBar.itemLink [ href "#items" ] [ text "Items" ]
+            , NavBar.itemLink [ href "#about" ] [ text "About" ]
+            ]
+        |> NavBar.view model.navState
+
+currentView : Model -> Html Msg
+currentView model =
+    case model.page of
+        NotFoundPage ->
+            notFoundView
+
+        GreetingPage pageModel ->
+            Greeting.view pageModel
+                |> Html.map GreetingMsg
+
+        AboutPage ->
+            aboutView
+
+        ItemsPage itemsModel ->
+            Items.view itemsModel
+                |> Html.map ItemsMsg
+
+        NewItemPage itemsModel ->
+            NewItem.view itemsModel
+                |> Html.map NewItemPageMsg
+
+        ItemPage itemsModel ->
+            EditItem.view itemsModel
+                |> Html.map ItemPageMsg
+
+notFoundView : Html msg
+notFoundView =
+    h3 [] [ text "Oops! The page you requested was not found!" ]
+
+aboutView : Html Msg
+aboutView  =
+    div []
+        [ h1 [] [ text "About" ]
+        , text "TODO: About VG soft and link to repo"
+        ]
