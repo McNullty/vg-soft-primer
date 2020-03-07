@@ -1,7 +1,7 @@
 module Route exposing (Route(..), parseUrl, pushUrl)
 
 import Browser.Navigation as Nav
-import Item exposing (ItemId)
+import Pages.Items.Item as Item exposing (ItemId)
 import Url exposing (Url)
 import Url.Parser exposing (..)
 

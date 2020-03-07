@@ -1,4 +1,4 @@
-module Greeting exposing (..)
+module Pages.Greeting.Greeting exposing (..)
 
 import Bootstrap.Button as Button exposing (button, onClick)
 import Bootstrap.Grid as Grid

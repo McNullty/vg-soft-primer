@@ -1,4 +1,4 @@
-module Items exposing (..)
+module Pages.Items.Items exposing (..)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)
@@ -10,9 +10,9 @@ import Bootstrap.Utilities.Spacing as Spacing
 import Html exposing (Html, div, h1, h3, span, text)
 import Html.Attributes exposing (class, href)
 import Http
-import Item exposing (Item, ItemId, idToString, itemDecoder)
 import Json.Decode as Decode exposing (Decoder, int, list)
 import Json.Decode.Pipeline exposing (required, requiredAt)
+import Pages.Items.Item as Item exposing (Item, ItemId, idToString, itemDecoder)
 import RemoteData exposing (WebData)
 
 

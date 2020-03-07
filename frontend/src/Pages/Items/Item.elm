@@ -1,4 +1,4 @@
-module Item exposing (..)
+module Pages.Items.Item exposing (..)
 
 import Json.Decode as Decode exposing (Decoder, string)
 import Json.Decode.Pipeline exposing (required)

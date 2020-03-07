@@ -3,14 +3,14 @@ module Main exposing (..)
 import Bootstrap.Navbar as NavBar
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
-import EditItem
+import Pages.Items.EditItem as EditItem
 import Html exposing (Html, div, h1, h3, text)
 import Html.Attributes exposing (href)
-import Item
-import Items
-import NewItem
+import Pages.Items.Item as Item
+import Pages.Items.Items as Items
+import Pages.Items.NewItem as NewItem
 import Route exposing (Route)
-import Greeting
+import Pages.Greeting.Greeting as Greeting
 import Url exposing (Url)
 import Url.Parser as UrlParser exposing ((</>), Parser, s, top)
 
