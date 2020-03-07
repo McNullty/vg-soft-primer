@@ -1,4 +1,4 @@
-module Pages.Items.EditItem exposing (..)
+module Pages.Items.EditItem exposing (Model, Msg, init, update, view)
 
 import Bootstrap.Button as Button exposing (button, onClick)
 import Bootstrap.Form as Form
@@ -6,7 +6,7 @@ import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Browser.Navigation as Nav
-import Error exposing (buildErrorMessage)
+import Error exposing (buildErrorMessage, viewError)
 import Html exposing (Html, div, h1, h3, text)
 import Html.Attributes exposing (class, for)
 import Http
@@ -159,31 +159,19 @@ viewItem item =
             editItemForm itemData
 
         RemoteData.Failure httpError ->
-            viewFetchError (buildErrorMessage httpError)
+            viewError "Couldn't fetch item at this time." (buildErrorMessage httpError)
 
 
-viewFetchError : String -> Html Msg
-viewFetchError errorMessage =
-    let
-        errorHeading =
-            "Couldn't fetch item at this time."
-    in
-    div []
-        [ h3 [] [ text errorHeading ]
-        , text ("Error: " ++ errorMessage)
-        ]
 
 viewSaveError : Maybe String -> Html msg
 viewSaveError maybeError =
     case maybeError of
         Just error ->
-            div []
-                [ h3 [] [ text "Couldn't save item at this time." ]
-                , text ("Error: " ++ error)
-                ]
+            viewError "Couldn't save item at this time." error
 
         Nothing ->
             text ""
+
 
 editItemForm : Item -> Html Msg
 editItemForm item =

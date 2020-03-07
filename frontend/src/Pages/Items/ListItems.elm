@@ -1,4 +1,4 @@
-module Pages.Items.ListItems exposing (..)
+module Pages.Items.ListItems exposing (Model, Msg, init, update, view)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)
@@ -7,8 +7,8 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Spinner as Spinner
 import Bootstrap.Table as Table exposing (Row)
 import Bootstrap.Utilities.Spacing as Spacing
-import Error exposing (buildErrorMessage)
-import Html exposing (Html, div, h1, h3, span, text)
+import Error exposing (buildErrorMessage, viewError)
+import Html exposing (Html, div, h1, span, text)
 import Html.Attributes exposing (class, href)
 import Http
 import Json.Decode as Decode exposing (Decoder, int, list)
@@ -152,7 +152,7 @@ viewItemsOrError model =
             viewItems itemsResponse
 
         RemoteData.Failure httpError ->
-            viewFetchError (buildErrorMessage httpError)
+            viewError "Couldn't fetch data at this time." (buildErrorMessage httpError)
 
 
 viewItems : ItemsResponse -> Html Msg
@@ -181,13 +181,3 @@ viewItem item =
             [ button [onClick (DeleteItem item.id), Button.large, Button.primary ] [text "Delete"]]
         ]
 
-viewFetchError : String -> Html Msg
-viewFetchError errorMessage =
-    let
-        errorHeading =
-            "Couldn't fetch data at this time."
-    in
-    div []
-        [ h3 [] [ text errorHeading ]
-        , text ("Error: " ++ errorMessage)
-        ]
