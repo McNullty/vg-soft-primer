@@ -26,6 +26,7 @@ type Msg
     | ItemReceived (WebData Item.Item)
     | UpdateItem
     | ItemUpdated (Result Http.Error String)
+    | CancelUpdate
 
 
 init : Item.ItemId -> Nav.Key -> ( Model, Cmd Msg )
@@ -92,6 +93,9 @@ update msg model =
             ( { model | saveError = Just (buildErrorMessage error) }
             , Cmd.none
             )
+
+        CancelUpdate ->
+            ( model, Route.pushUrl Route.Items model.navKey)
 
 
 updateItem : WebData Item -> Cmd Msg
@@ -203,5 +207,7 @@ editItemForm item =
         , div []
             [ button [ onClick UpdateItem, Button.large, Button.primary ]
                 [text "Submit"]
+            , button [ onClick CancelUpdate, Button.large, Button.primary ]
+                [text "Cancel"]
             ]
         ]
