@@ -3,10 +3,12 @@ module NewItem exposing (..)
 import Bootstrap.Button as Button exposing (button, onClick)
 import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
+import Bootstrap.Grid as Grid
+import Bootstrap.Grid.Col as Col
 import Browser.Navigation as Nav
 import Greeting exposing (buildErrorMessage)
-import Html exposing (Html, div, h3, text)
-import Html.Attributes exposing (for)
+import Html exposing (Html, div, h1, h3, text)
+import Html.Attributes exposing (class, for)
 import Http exposing (Metadata)
 import Item
 import Json.Encode as Encode
@@ -118,7 +120,7 @@ newItemEncoder item =
 view : Model -> Html Msg
 view model =
     div []
-        [ h3 [] [ text "Create New Item" ]
+        [ h1 [ class "text-center" ] [ text "Create New Item" ]
         , newItemForm
         , viewError model.createError
         ]
@@ -139,27 +141,31 @@ viewError maybeError =
 
 newItemForm : Html Msg
 newItemForm =
-    div []
-        [ Form.form []
-            [ Form.group []
-                [ Form.label [ for "name" ] [ text "Name" ]
-                , Input.text
-                      [ Input.id "name"
-                      , Input.onInput StoreName
-                      ]
-                ]
-            , Form.group []
-                [ Form.label [ for "description" ] [ text "Description" ]
-                , Input.text
-                    [ Input.id "description"
-                    , Input.onInput StoreDescription
+    Grid.container []
+        [ Grid.row []
+            [ Grid.col [ Col.md6, Col.offsetMd3 ]
+                [ Form.form []
+                    [ Form.group []
+                        [ Form.label [ for "name" ] [ text "Name" ]
+                        , Input.text
+                              [ Input.id "name"
+                              , Input.onInput StoreName
+                              ]
+                        ]
+                    , Form.group []
+                        [ Form.label [ for "description" ] [ text "Description" ]
+                        , Input.text
+                            [ Input.id "description"
+                            , Input.onInput StoreDescription
+                            ]
+                        ]
+                    ]
+                , div []
+                    [ button [ onClick CreateItem, Button.large, Button.primary ]
+                        [text "Submit"]
+                    , button [ onClick CancelSave, Button.large, Button.primary ]
+                        [text "Cancel"]
                     ]
                 ]
-            ]
-        , div []
-            [ button [ onClick CreateItem, Button.large, Button.primary ]
-                [text "Submit"]
-            , button [ onClick CancelSave, Button.large, Button.primary ]
-                [text "Cancel"]
             ]
         ]
