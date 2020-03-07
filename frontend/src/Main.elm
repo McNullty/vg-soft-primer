@@ -84,8 +84,8 @@ routeParser =
         [ UrlParser.map Route.Greeting top
         , UrlParser.map Route.About (s "about")
         , UrlParser.map Route.Items (s "items")
-        , UrlParser.map Route.Item (s "items" </> Item.idParser)
         , UrlParser.map Route.NewItem (s "items" </> s "new")
+        , UrlParser.map Route.Item (s "items" </> Item.idParser)
         ]
 
 
@@ -189,8 +189,8 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         --TODO: remove logging in production
-        _ = Debug.log "MAIN Msg: " msg
-        _ = Debug.log "MAIN Model: " model
+        _ = Debug.log "MAIN update Msg: " msg
+        _ = Debug.log "MAIN update Model: " model
     in
     case ( msg, model.page ) of
         ( LinkClicked urlRequest, _ ) ->
