@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @Service
 public class ItemServiceImpl implements ItemService {
 
@@ -35,6 +36,7 @@ public class ItemServiceImpl implements ItemService {
 
     return itemRepository.save(item);
   }
+
 
   @Override
   public void updateItem(final UUID uuid, final NewItemModel updateItem) {

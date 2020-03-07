@@ -107,7 +107,14 @@ update msg model =
             )
 
 
--- VIEWS
+--    __      _______ ________          __
+--    \ \    / /_   _|  ____\ \        / /
+--     \ \  / /  | | | |__   \ \  /\  / /
+--      \ \/ /   | | |  __|   \ \/  \/ /
+--       \  /   _| |_| |____   \  /\  /
+--        \/   |_____|______|   \/  \/
+--
+
 
 view : Model -> Html Msg
 view model =
@@ -167,6 +174,8 @@ viewItem item =
             [ text item.name ]
         , Table.td []
             [ text item.description ]
+        , Table.td []
+            [ Alert.link [href ("#items/" ++ (Item.idToString item.id))] [text "Edit"]]
         , Table.td []
             [ button [onClick (DeleteItem item.id), Button.large, Button.primary ] [text "Delete"]]
         ]

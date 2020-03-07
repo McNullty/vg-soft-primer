@@ -8,19 +8,15 @@ import Greeting exposing (buildErrorMessage)
 import Html exposing (Html, div, h3, text)
 import Html.Attributes exposing (for)
 import Http exposing (Metadata)
+import Item
 import Json.Encode as Encode
 import Route
 
 
 type alias Model =
     { navKey : Nav.Key
-    , item : NewItem
+    , item : Item.ItemModel
     , createError : Maybe String
-    }
-
-type alias NewItem =
-    { name : String
-    , description : String
     }
 
 
@@ -44,7 +40,7 @@ initialModel navKey =
     }
 
 
-emptyItem : NewItem
+emptyItem : Item.ItemModel
 emptyItem =
     { name = ""
     , description = ""
@@ -89,7 +85,7 @@ update msg model =
             )
 
 
-createItem : NewItem -> Cmd Msg
+createItem : Item.ItemModel -> Cmd Msg
 createItem item =
     Http.post
         { url = "/api/items"
@@ -98,14 +94,21 @@ createItem item =
         }
 
 
-newItemEncoder : NewItem -> Encode.Value
+newItemEncoder : Item.ItemModel -> Encode.Value
 newItemEncoder item =
     Encode.object
         [ ( "name", Encode.string item.name )
         , ( "description", Encode.string item.description )
         ]
 
--- VIEWS
+--    __      _______ ________          __
+--    \ \    / /_   _|  ____\ \        / /
+--     \ \  / /  | | | |__   \ \  /\  / /
+--      \ \/ /   | | |  __|   \ \/  \/ /
+--       \  /   _| |_| |____   \  /\  /
+--        \/   |_____|______|   \/  \/
+--
+
 
 view : Model -> Html Msg
 view model =

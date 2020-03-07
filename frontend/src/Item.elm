@@ -2,6 +2,7 @@ module Item exposing (..)
 
 import Json.Decode as Decode exposing (Decoder, string)
 import Json.Decode.Pipeline exposing (required)
+import Url.Parser exposing (Parser, custom)
 
 type ItemId
     = ItemId String
@@ -10,6 +11,11 @@ type ItemId
 type alias Item =
     { id : ItemId
     , name : String
+    , description : String
+    }
+
+type alias ItemModel =
+    { name : String
     , description : String
     }
 
@@ -31,3 +37,10 @@ idToString : ItemId -> String
 idToString (ItemId id) =
     id
 
+stringToId : String -> Maybe ItemId
+stringToId stringId =
+    Just (ItemId stringId)
+
+idParser : Parser (ItemId -> a) a
+idParser =
+    custom "ITEMID" stringToId

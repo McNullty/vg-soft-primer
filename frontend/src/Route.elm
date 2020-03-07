@@ -1,6 +1,7 @@
 module Route exposing (Route(..), parseUrl, pushUrl)
 
 import Browser.Navigation as Nav
+import Item exposing (ItemId)
 import Url exposing (Url)
 import Url.Parser exposing (..)
 
@@ -9,6 +10,7 @@ type Route
     | Greeting
     | Items
     | NewItem
+    | Item ItemId
     | About
 
 parseUrl : Url -> Route
@@ -20,6 +22,7 @@ parseUrl url =
         Nothing ->
             NotFound
 
+-- TODO: Check if this method is duplicate of Main.routeParser
 matchRoute : Parser (Route -> a) a
 matchRoute =
     oneOf
@@ -27,7 +30,6 @@ matchRoute =
         ]
 
 
--- TODO: Fix this method, remove it or use it
 pushUrl : Route -> Nav.Key -> Cmd msg
 pushUrl route navKey =
     routeToString route
@@ -48,6 +50,9 @@ routeToString route =
 
         NewItem ->
             "#items/new"
+
+        Item itemId ->
+            "#items/" ++ (Item.idToString itemId)
 
         About ->
             "#about"
