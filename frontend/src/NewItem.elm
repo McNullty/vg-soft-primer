@@ -25,6 +25,7 @@ type Msg
     | StoreDescription String
     | CreateItem
     | ItemCreated (Result Http.Error String)
+    | CancelSave
 
 
 init : Nav.Key -> ( Model, Cmd Msg )
@@ -84,6 +85,9 @@ update msg model =
             , Cmd.none
             )
 
+        CancelSave ->
+            ( model, Route.pushUrl Route.Items model.navKey )
+
 
 createItem : Item.ItemModel -> Cmd Msg
 createItem item =
@@ -100,6 +104,7 @@ newItemEncoder item =
         [ ( "name", Encode.string item.name )
         , ( "description", Encode.string item.description )
         ]
+
 
 --    __      _______ ________          __
 --    \ \    / /_   _|  ____\ \        / /
@@ -154,5 +159,7 @@ newItemForm =
         , div []
             [ button [ onClick CreateItem, Button.large, Button.primary ]
                 [text "Submit"]
+            , button [ onClick CancelSave, Button.large, Button.primary ]
+                [text "Cancel"]
             ]
         ]
