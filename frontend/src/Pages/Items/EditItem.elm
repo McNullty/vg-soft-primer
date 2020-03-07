@@ -6,11 +6,11 @@ import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Browser.Navigation as Nav
+import Error exposing (buildErrorMessage)
 import Html exposing (Html, div, h1, h3, text)
 import Html.Attributes exposing (class, for)
 import Http
 import Json.Encode as Encode
-import Pages.Greeting.Greeting exposing (buildErrorMessage)
 import Pages.Items.Item as Item exposing (Item, ItemModel)
 import RemoteData exposing (WebData)
 import Route
