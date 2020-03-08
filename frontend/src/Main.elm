@@ -103,10 +103,16 @@ initCurrentPage ( model, existingCommands ) =
                     in
                     ( GreetingPage pageModel, Cmd.map GreetingPageMsg pageCommands )
 
-                Route.Items ->
+                Route.Items page ->
                     let
+                        pageNumber =
+                            case page of
+                                Just pageNum -> pageNum
+
+                                Nothing -> 0
+
                         ( pageModel, pageCommands ) =
-                            Items.init
+                            Items.init pageNumber
                     in
                     ( ListItemsPage pageModel, Cmd.map ListItemsPageMsg pageCommands )
 
@@ -138,6 +144,11 @@ initCurrentPage ( model, existingCommands ) =
 -}
 urlUpdate : Url -> Model -> ( Model, Cmd Msg )
 urlUpdate url model =
+    let
+        --TODO: remove logging in production
+        _ = Debug.log "MAIN urlUpdate URL" url
+        _ = Debug.log "MAIN urlUpdate Decoding Url" (decode url)
+    in
     case (decode url) of
         Nothing ->
             ( { model | page = NotFoundPage }, Cmd.none )
@@ -154,10 +165,18 @@ urlUpdate url model =
                 Route.About ->
                     ( { model | page = AboutPage }, Cmd.none)
 
-                Route.Items ->
+                Route.Items page ->
                     let
+                        pageNumber =
+                            case page of
+                                Just pageNum -> pageNum
+
+                                Nothing -> 0
+
                         ( pageModel, pageCommands ) =
-                            Items.init
+                            Items.init pageNumber
+
+                        _ = Debug.log "Items page number: " pageNumber
                     in
                     ( { model | page = (ListItemsPage pageModel) }, Cmd.map ListItemsPageMsg pageCommands)
 
@@ -186,8 +205,8 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         --TODO: remove logging in production
-        _ = Debug.log "MAIN update Msg: " msg
-        _ = Debug.log "MAIN update Model: " model
+        _ = Debug.log "MAIN update Msg" msg
+        _ = Debug.log "MAIN update Model" model
     in
     case ( msg, model.page ) of
         ( LinkClicked urlRequest, _ ) ->
@@ -275,10 +294,10 @@ menu model =
     NavBar.config NavMsg
         |> NavBar.withAnimation
         |> NavBar.container
-        |> NavBar.brand [ href "#" ] [ text "Elm Stopwatch" ]
+        |> NavBar.brand [ href "/" ] [ text "Elm Stopwatch" ]
         |> NavBar.items
-            [ NavBar.itemLink [ href "#items" ] [ text "Items" ]
-            , NavBar.itemLink [ href "#about" ] [ text "About" ]
+            [ NavBar.itemLink [ href "/items" ] [ text "Items" ]
+            , NavBar.itemLink [ href "/about" ] [ text "About" ]
             ]
         |> NavBar.view model.navState
 

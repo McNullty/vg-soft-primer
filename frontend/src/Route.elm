@@ -4,18 +4,19 @@ import Browser.Navigation as Nav
 import Pages.Items.Item as Item exposing (ItemId)
 import Url exposing (Url)
 import Url.Parser as UrlParser exposing (..)
+import Url.Parser.Query as Query
 
 type Route
     = NotFound
     | Greeting
-    | Items
+    | Items (Maybe Int)
     | NewItem
     | Item ItemId
     | About
 
 parseUrl : Url -> Route
 parseUrl url =
-    case parse routeParser url of
+        case parse routeParser url of
         Just route ->
             route
 
@@ -27,8 +28,8 @@ routeParser =
     UrlParser.oneOf
         [ UrlParser.map Greeting top
         , UrlParser.map About (s "about")
-        , UrlParser.map Items (s "items")
-        , UrlParser.map NewItem (s "items" </> s "new")
+        , UrlParser.map Items (s "items" <?> Query.int "page")
+        , UrlParser.map NewItem (s "items-new")
         , UrlParser.map Item (s "items" </> Item.idParser)
         ]
 
@@ -50,19 +51,24 @@ routeToString : Route -> String
 routeToString route =
     case route of
         NotFound ->
-            "#not-found"
+            "/not-found"
 
         Greeting ->
-            "#greeting"
+            "/greeting"
 
-        Items ->
-            "#items"
+        Items page ->
+            case page of
+                Just pageNumber ->
+                    "/items?page=" ++ String.fromInt pageNumber
+
+                Nothing ->
+                    "/items"
 
         NewItem ->
-            "#items/new"
+            "/items-new"
 
         Item itemId ->
-            "#items/" ++ (Item.idToString itemId)
+            "/items/" ++ (Item.idToString itemId)
 
         About ->
-            "#about"
+            "/about"
