@@ -1,4 +1,4 @@
-module Greeting exposing (..)
+module Pages.Greeting.Greeting exposing (Model, Msg, init, update, view)
 
 import Bootstrap.Button as Button exposing (button, onClick)
 import Bootstrap.Grid as Grid
@@ -6,7 +6,8 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Spinner as Spinner
 import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
-import Html exposing (Html, div, h1, h3, text, span)
+import Error exposing (buildErrorMessage, viewError)
+import Html exposing (Html, div, h1, text, span)
 import Html.Attributes exposing (class)
 import RemoteData exposing (WebData)
 import Http
@@ -73,7 +74,9 @@ update msg model =
         GreetingReceived response ->
             ( { model | greeting = response }, Cmd.none )
 
+
 -- VIEWS
+
 
 view : Model -> Html Msg
 view model =
@@ -108,7 +111,7 @@ viewGreetingOrError model =
             viewGreeting greeting
 
         RemoteData.Failure httpError ->
-            viewError (buildErrorMessage httpError)
+            viewError "Couldn't fetch data at this time." (buildErrorMessage httpError)
 
 viewGreeting : Greeting -> Html Msg
 viewGreeting greeting =
@@ -128,33 +131,3 @@ viewGreeting greeting =
                     ]
             )
         ]
-
-viewError : String -> Html Msg
-viewError errorMessage =
-    let
-        errorHeading =
-            "Couldn't fetch data at this time."
-    in
-    div []
-        [ h3 [] [ text errorHeading ]
-        , text ("Error: " ++ errorMessage)
-        ]
-
-
-buildErrorMessage : Http.Error -> String
-buildErrorMessage httpError =
-    case httpError of
-        Http.BadUrl message ->
-            message
-
-        Http.Timeout ->
-            "Server is taking too long to respond. Please try again later."
-
-        Http.NetworkError ->
-            "Unable to reach server."
-
-        Http.BadStatus statusCode ->
-            "Request failed with status code: " ++ String.fromInt statusCode
-
-        Http.BadBody message ->
-            message

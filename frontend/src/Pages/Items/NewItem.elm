@@ -1,4 +1,4 @@
-module NewItem exposing (..)
+module Pages.Items.NewItem exposing (Model, Msg, init, update, view)
 
 import Bootstrap.Button as Button exposing (button, onClick)
 import Bootstrap.Form as Form
@@ -6,12 +6,12 @@ import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Browser.Navigation as Nav
-import Greeting exposing (buildErrorMessage)
-import Html exposing (Html, div, h1, h3, text)
+import Error exposing (buildErrorMessage, viewError)
+import Html exposing (Html, div, h1, text)
 import Html.Attributes exposing (class, for)
 import Http exposing (Metadata)
-import Item
 import Json.Encode as Encode
+import Pages.Items.Item as Item
 import Route
 
 
@@ -122,18 +122,15 @@ view model =
     div []
         [ h1 [ class "text-center" ] [ text "Create New Item" ]
         , newItemForm
-        , viewError model.createError
+        , viewCreateError model.createError
         ]
 
 
-viewError : Maybe String -> Html msg
-viewError maybeError =
+viewCreateError : Maybe String -> Html msg
+viewCreateError maybeError =
     case maybeError of
         Just error ->
-            div []
-                [ h3 [] [ text "Couldn't create item at this time." ]
-                , text ("Error: " ++ error)
-                ]
+            viewError "Couldn't create item at this time." error
 
         Nothing ->
             text ""

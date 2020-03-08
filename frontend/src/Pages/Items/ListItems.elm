@@ -1,4 +1,4 @@
-module Items exposing (..)
+module Pages.Items.ListItems exposing (Model, Msg, init, update, view)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)
@@ -7,12 +7,13 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Spinner as Spinner
 import Bootstrap.Table as Table exposing (Row)
 import Bootstrap.Utilities.Spacing as Spacing
-import Html exposing (Html, div, h1, h3, span, text)
+import Error exposing (buildErrorMessage, viewError)
+import Html exposing (Html, div, h1, span, text)
 import Html.Attributes exposing (class, href)
 import Http
-import Item exposing (Item, ItemId, idToString, itemDecoder)
 import Json.Decode as Decode exposing (Decoder, int, list)
 import Json.Decode.Pipeline exposing (required, requiredAt)
+import Pages.Items.Item as Item exposing (Item, ItemId, idToString, itemDecoder)
 import RemoteData exposing (WebData)
 
 
@@ -151,7 +152,7 @@ viewItemsOrError model =
             viewItems itemsResponse
 
         RemoteData.Failure httpError ->
-            viewError (buildErrorMessage httpError)
+            viewError "Couldn't fetch data at this time." (buildErrorMessage httpError)
 
 
 viewItems : ItemsResponse -> Html Msg
@@ -180,33 +181,3 @@ viewItem item =
             [ button [onClick (DeleteItem item.id), Button.large, Button.primary ] [text "Delete"]]
         ]
 
--- TODO: Refactor - this functions should go to errors module
-viewError : String -> Html Msg
-viewError errorMessage =
-    let
-        errorHeading =
-            "Couldn't fetch data at this time."
-    in
-    div []
-        [ h3 [] [ text errorHeading ]
-        , text ("Error: " ++ errorMessage)
-        ]
-
-
-buildErrorMessage : Http.Error -> String
-buildErrorMessage httpError =
-    case httpError of
-        Http.BadUrl message ->
-            message
-
-        Http.Timeout ->
-            "Server is taking too long to respond. Please try again later."
-
-        Http.NetworkError ->
-            "Unable to reach server."
-
-        Http.BadStatus statusCode ->
-            "Request failed with status code: " ++ String.fromInt statusCode
-
-        Http.BadBody message ->
-            message
