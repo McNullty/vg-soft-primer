@@ -36,8 +36,7 @@ routeParser =
 
 decode : Url -> Maybe Route
 decode url =
-    { url | path = Maybe.withDefault "" url.fragment, fragment = Nothing }
-    |> UrlParser.parse routeParser
+    UrlParser.parse routeParser url
 
 
 
