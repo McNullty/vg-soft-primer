@@ -14,10 +14,10 @@ import Html exposing (Html, div, h1, span, text)
 import Html.Attributes exposing (class, href)
 import Http
 import Json.Decode as Decode exposing (Decoder, int, list)
-import Json.Decode.Pipeline exposing (required, requiredAt)
+import Json.Decode.Pipeline exposing (optionalAt, required, requiredAt)
 import List exposing (range)
 import Pages.Items.Item as Item exposing (Item, ItemId, idToString, itemDecoder)
-import RemoteData exposing (WebData)
+import RemoteData exposing (RemoteData(..), WebData)
 
 
 type alias Page =
@@ -81,7 +81,7 @@ deleteItem itemId =
 itemsResponseDecoder : Decoder ItemsResponse
 itemsResponseDecoder =
     Decode.succeed ItemsResponse
-        |> requiredAt ["_embedded", "items"] (list itemDecoder)
+        |> optionalAt ["_embedded", "items"] (list itemDecoder) []
         |> requiredAt ["page"] pageDecoder
 
 
