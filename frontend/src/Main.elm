@@ -122,16 +122,16 @@ initCurrentPage ( model, existingCommands ) =
                 Route.NewItem ->
                     let
                         ( pageModel, pageCommands ) =
-                            NewItem.init model.navKey
+                            NewItem.init model.navKey (getActiveItemsPage model.activeItemsPage)
                     in
-                    ( NewItemPage pageModel, Nothing, Cmd.map NewItemPageMsg pageCommands )
+                    ( NewItemPage pageModel, model.activeItemsPage, Cmd.map NewItemPageMsg pageCommands )
 
                 Route.Item itemId ->
                     let
                         ( pageModel, pageCommands ) =
                             EditItem.init itemId model.navKey (getActiveItemsPage model.activeItemsPage)
                     in
-                    ( ItemPage pageModel, Nothing, Cmd.map ItemPageMsg pageCommands)
+                    ( ItemPage pageModel, model.activeItemsPage , Cmd.map ItemPageMsg pageCommands)
 
                 Route.About ->
                     ( AboutPage, Nothing, Cmd.none )
@@ -188,7 +188,7 @@ urlUpdate url model =
                 Route.NewItem ->
                     let
                         ( pageModel, pageCommands ) =
-                            NewItem.init model.navKey
+                            NewItem.init model.navKey (getActiveItemsPage model.activeItemsPage)
                     in
                     ( { model | page = (NewItemPage pageModel) }, Cmd.map NewItemPageMsg pageCommands )
 

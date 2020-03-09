@@ -18,6 +18,7 @@ import Route
 type alias Model =
     { navKey : Nav.Key
     , item : Item.ItemModel
+    , activeItemsPage: Int
     , createError : Maybe String
     }
 
@@ -30,16 +31,17 @@ type Msg
     | CancelSave
 
 
-init : Nav.Key -> ( Model, Cmd Msg )
-init navKey =
-    ( initialModel navKey, Cmd.none )
+init : Nav.Key -> Int -> ( Model, Cmd Msg )
+init navKey activePage =
+    ( initialModel navKey activePage, Cmd.none )
 
 
-initialModel : Nav.Key -> Model
-initialModel navKey =
+initialModel : Nav.Key -> Int -> Model
+initialModel navKey activePage =
     { navKey = navKey
     , item = emptyItem
     , createError = Nothing
+    , activeItemsPage = activePage
     }
 
 
@@ -79,8 +81,7 @@ update msg model =
 
         ItemCreated (Ok _) ->
             ( {model | createError = Nothing }
-            -- TODO: Add right page number
-            , Route.pushUrl (Route.Items Nothing) model.navKey
+            , Route.pushUrl (Route.Items (Just model.activeItemsPage)) model.navKey
             )
 
         ItemCreated (Err error) ->
@@ -89,8 +90,7 @@ update msg model =
             )
 
         CancelSave ->
-            -- TODO: Add right page number
-            ( model, Route.pushUrl (Route.Items Nothing) model.navKey )
+            ( model, Route.pushUrl (Route.Items (Just model.activeItemsPage)) model.navKey )
 
 
 createItem : Item.ItemModel -> Cmd Msg
