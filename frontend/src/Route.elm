@@ -39,7 +39,6 @@ decode url =
     UrlParser.parse routeParser url
 
 
-
 pushUrl : Route -> Nav.Key -> Cmd msg
 pushUrl route navKey =
     routeToString route
@@ -48,6 +47,9 @@ pushUrl route navKey =
 
 routeToString : Route -> String
 routeToString route =
+    let
+        _ = Debug.log "Route.routeToString" route
+    in
     case route of
         NotFound ->
             "/not-found"

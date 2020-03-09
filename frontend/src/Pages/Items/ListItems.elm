@@ -35,7 +35,7 @@ type alias ItemsResponse =
 type alias Model =
     { itemsResponse : WebData ItemsResponse
     , deleteError : Maybe String
-    , activePageIdx : Int
+    , activePage : Int
     }
 
 type Msg
@@ -43,23 +43,23 @@ type Msg
     | ItemsReceived (WebData ItemsResponse)
     | DeleteItem ItemId
     | ItemDeleted (Result Http.Error String)
-    | PaginationMsg Int
+    | Pagination Int
 
 init : Int -> ( Model, Cmd Msg )
 init pageNumber =
-    ( initialModel pageNumber, fetchItems )
+    ( initialModel pageNumber, fetchItems pageNumber)
 
 initialModel : Int -> Model
 initialModel pageNumber =
     { itemsResponse = RemoteData.Loading
     , deleteError = Nothing
-    , activePageIdx = pageNumber
+    , activePage = pageNumber
     }
 
-fetchItems : Cmd Msg
-fetchItems =
+fetchItems : Int -> Cmd Msg
+fetchItems pageNumber =
     Http.get
-        { url = "/api/items"
+        { url = "/api/items?page=" ++ String.fromInt pageNumber
         , expect =
             itemsResponseDecoder
                 |> Http.expectJson (RemoteData.fromResult >> ItemsReceived)
@@ -95,9 +95,12 @@ pageDecoder =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        _ = Debug.log "ListItems Msg" msg
+    in
     case msg of
         FetchItems ->
-            ( { model | itemsResponse = RemoteData.Loading }, fetchItems )
+            ( { model | itemsResponse = RemoteData.Loading }, fetchItems model.activePage )
 
         ItemsReceived response ->
             ( { model | itemsResponse = response }, Cmd.none )
@@ -106,15 +109,15 @@ update msg model =
             ( model, deleteItem itemId )
 
         ItemDeleted (Ok _) ->
-            ( model, fetchItems )
+            ( model, fetchItems model.activePage )
 
         ItemDeleted (Err error) ->
             ( { model | deleteError = Just (buildErrorMessage error) }
             , Cmd.none
             )
 
-        PaginationMsg page ->
-            ( {model | activePageIdx = page }, Cmd.none)
+        Pagination page ->
+            ( {model | activePage = page }, Cmd.none)
 
 
 --    __      _______ ________          __
@@ -203,13 +206,13 @@ simplePaginationList model =
         |> Pagination.align HAlign.centerXs
         |> Pagination.large
         |> Pagination.itemsList
-            { selectedMsg = PaginationMsg
+            { selectedMsg = Pagination
             , prevItem = Just <| Pagination.ListItem [] [ text "Previous" ]
             , nextItem = Just <| Pagination.ListItem [] [ text "Next" ]
-            , activeIdx = model.activePageIdx
+            , activeIdx = model.activePage
             , data = pagingDataFromModel model
             , itemFn = \idx _ -> Pagination.ListItem [] [ text <| String.fromInt (idx + 1) ]
-            , urlFn = \idx _ -> "/items?page=" ++ String.fromInt (idx + 1)
+            , urlFn = \idx _ -> "/items?page=" ++ String.fromInt idx
             }
         |> Pagination.view
 
@@ -225,3 +228,4 @@ pagingDataFromModel model =
 pagingData : Int -> List Int
 pagingData numberOfPages =
     range 1 numberOfPages
+
