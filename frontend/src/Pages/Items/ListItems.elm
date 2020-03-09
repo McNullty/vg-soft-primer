@@ -15,7 +15,7 @@ import Html.Attributes exposing (class, href)
 import Http
 import Json.Decode as Decode exposing (Decoder, int, list)
 import Json.Decode.Pipeline exposing (optionalAt, required, requiredAt)
-import List exposing (range)
+import List exposing (length, range)
 import Pages.Items.Item as Item exposing (Item, ItemId, idToString, itemDecoder)
 import RemoteData exposing (RemoteData(..), WebData)
 
@@ -103,7 +103,17 @@ update msg model =
             ( { model | itemsResponse = RemoteData.Loading }, fetchItems model.activePage )
 
         ItemsReceived response ->
-            ( { model | itemsResponse = response }, Cmd.none )
+            let
+                numberOfItems =
+                    case response of
+                        Success res -> length res.items
+                        _ -> 0
+
+                _ = Debug.log "Got items" numberOfItems
+            in
+            case numberOfItems of
+                0 -> ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) )
+                _ -> ( { model | itemsResponse = response }, Cmd.none )
 
         DeleteItem itemId ->
             ( model, deleteItem itemId )
