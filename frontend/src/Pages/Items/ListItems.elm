@@ -1,4 +1,4 @@
-module Pages.Items.ListItems exposing (Model, Msg, init, update, view)
+module Pages.Items.ListItems exposing (Model, Msg, init, update, view, pagingData)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)
@@ -15,6 +15,7 @@ import Html.Attributes exposing (class, href)
 import Http
 import Json.Decode as Decode exposing (Decoder, int, list)
 import Json.Decode.Pipeline exposing (required, requiredAt)
+import List exposing (range)
 import Pages.Items.Item as Item exposing (Item, ItemId, idToString, itemDecoder)
 import RemoteData exposing (WebData)
 
@@ -206,8 +207,21 @@ simplePaginationList model =
             , prevItem = Just <| Pagination.ListItem [] [ text "Previous" ]
             , nextItem = Just <| Pagination.ListItem [] [ text "Next" ]
             , activeIdx = model.activePageIdx
-            , data = [ 1, 2, 3, 4, 5 ] -- You'd typically generate this from your model somehow !
+            , data = pagingDataFromModel model
             , itemFn = \idx _ -> Pagination.ListItem [] [ text <| String.fromInt (idx + 1) ]
             , urlFn = \idx _ -> "/items?page=" ++ String.fromInt (idx + 1)
             }
         |> Pagination.view
+
+pagingDataFromModel : Model -> List Int
+pagingDataFromModel model =
+    case model.itemsResponse of
+        RemoteData.Success itemsResponse ->
+            pagingData itemsResponse.page.totalPages
+
+        _ ->
+            []
+
+pagingData : Int -> List Int
+pagingData numberOfPages =
+    range 1 numberOfPages
