@@ -79,7 +79,8 @@ update msg model =
 
         ItemCreated (Ok _) ->
             ( {model | createError = Nothing }
-            , Route.pushUrl Route.Items model.navKey
+            -- TODO: Add right page number
+            , Route.pushUrl (Route.Items Nothing) model.navKey
             )
 
         ItemCreated (Err error) ->
@@ -88,7 +89,8 @@ update msg model =
             )
 
         CancelSave ->
-            ( model, Route.pushUrl Route.Items model.navKey )
+            -- TODO: Add right page number
+            ( model, Route.pushUrl (Route.Items Nothing) model.navKey )
 
 
 createItem : Item.ItemModel -> Cmd Msg

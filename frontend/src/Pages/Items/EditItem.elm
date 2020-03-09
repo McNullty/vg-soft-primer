@@ -88,7 +88,8 @@ update msg model =
 
         ItemUpdated (Ok _) ->
             ( {model | saveError = Nothing }
-            , Route.pushUrl Route.Items model.navKey
+            -- TODO: Add right page number
+            , Route.pushUrl (Route.Items Nothing) model.navKey
             )
 
         ItemUpdated (Err error) ->
@@ -97,7 +98,8 @@ update msg model =
             )
 
         CancelUpdate ->
-            ( model, Route.pushUrl Route.Items model.navKey)
+            -- TODO: Add right page number
+            ( model, Route.pushUrl (Route.Items Nothing) model.navKey)
 
 
 updateItem : WebData Item -> Cmd Msg
