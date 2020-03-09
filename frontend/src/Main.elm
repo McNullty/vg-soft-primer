@@ -72,6 +72,8 @@ subscriptions model =
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url navKey =
     let
+        _ = Debug.log "Test Version" 2
+
         ( navState, navCmd ) =
             NavBar.initialState NavMsg
 
