@@ -18,6 +18,7 @@ import Route
 type alias Model =
     { navKey : Nav.Key
     , item : WebData Item.Item
+    , activeItemsPage: Int
     , saveError : Maybe String
     }
 
@@ -31,16 +32,17 @@ type Msg
     | CancelUpdate
 
 
-init : Item.ItemId -> Nav.Key -> ( Model, Cmd Msg )
-init itemId navKey =
-    ( initialModel navKey, fetchItem itemId )
+init : Item.ItemId -> Nav.Key -> Int -> ( Model, Cmd Msg )
+init itemId navKey activePage =
+    ( initialModel navKey activePage, fetchItem itemId )
 
 
-initialModel : Nav.Key -> Model
-initialModel navKey =
+initialModel : Nav.Key -> Int -> Model
+initialModel navKey activePage =
     { navKey = navKey
     , item = RemoteData.Loading
     , saveError = Nothing
+    , activeItemsPage = activePage
     }
 
 fetchItem : Item.ItemId -> Cmd Msg
@@ -88,8 +90,7 @@ update msg model =
 
         ItemUpdated (Ok _) ->
             ( {model | saveError = Nothing }
-            -- TODO: Add right page number
-            , Route.pushUrl (Route.Items Nothing) model.navKey
+            , Route.pushUrl (Route.Items (Just model.activeItemsPage)) model.navKey
             )
 
         ItemUpdated (Err error) ->
@@ -98,8 +99,7 @@ update msg model =
             )
 
         CancelUpdate ->
-            -- TODO: Add right page number
-            ( model, Route.pushUrl (Route.Items Nothing) model.navKey)
+            ( model, Route.pushUrl (Route.Items (Just model.activeItemsPage)) model.navKey)
 
 
 updateItem : WebData Item -> Cmd Msg
