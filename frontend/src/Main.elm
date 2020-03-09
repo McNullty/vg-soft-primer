@@ -11,6 +11,7 @@ import Pages.Items.NewItem as NewItem
 import Route exposing (Route, decode)
 import Pages.Greeting.Greeting as Greeting
 import Url exposing (Url)
+import Util exposing (getActiveItemsPage)
 
 
 type alias Model =
@@ -18,6 +19,7 @@ type alias Model =
     , page : Page
     , navKey : Nav.Key
     , navState : NavBar.State
+    , activeItemsPage : Maybe Int
     }
 
 {-| This is Type with all pages. Every new page should be added here.
@@ -79,6 +81,7 @@ init _ url navKey =
                 , page = NotFoundPage
                 , navKey = navKey
                 , navState = navState
+                , activeItemsPage = Nothing
                 }
     in
     initCurrentPage ( model, Cmd.batch [ urlCmd, navCmd ] )
@@ -91,17 +94,17 @@ init _ url navKey =
 initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 initCurrentPage ( model, existingCommands ) =
     let
-        ( currentPage, mappedPageCommands ) =
+        ( currentPage, activeItemsPage, mappedPageCommands ) =
             case model.route of
                 Route.NotFound ->
-                    ( NotFoundPage, Cmd.none )
+                    ( NotFoundPage, Nothing, Cmd.none )
 
                 Route.Greeting ->
                     let
                         ( pageModel, pageCommands ) =
                             Greeting.init
                     in
-                    ( GreetingPage pageModel, Cmd.map GreetingPageMsg pageCommands )
+                    ( GreetingPage pageModel, Nothing, Cmd.map GreetingPageMsg pageCommands )
 
                 Route.Items page ->
                     let
@@ -114,27 +117,27 @@ initCurrentPage ( model, existingCommands ) =
                         ( pageModel, pageCommands ) =
                             Items.init pageNumber
                     in
-                    ( ListItemsPage pageModel, Cmd.map ListItemsPageMsg pageCommands )
+                    ( ListItemsPage pageModel, Just pageNumber, Cmd.map ListItemsPageMsg pageCommands )
 
                 Route.NewItem ->
                     let
                         ( pageModel, pageCommands ) =
                             NewItem.init model.navKey
                     in
-                    ( NewItemPage pageModel, Cmd.map NewItemPageMsg pageCommands )
+                    ( NewItemPage pageModel, Nothing, Cmd.map NewItemPageMsg pageCommands )
 
                 Route.Item itemId ->
                     let
                         ( pageModel, pageCommands ) =
-                            EditItem.init itemId model.navKey
+                            EditItem.init itemId model.navKey (getActiveItemsPage model.activeItemsPage)
                     in
-                    ( ItemPage pageModel, Cmd.map ItemPageMsg pageCommands)
+                    ( ItemPage pageModel, Nothing, Cmd.map ItemPageMsg pageCommands)
 
                 Route.About ->
-                    ( AboutPage, Cmd.none )
+                    ( AboutPage, Nothing, Cmd.none )
 
     in
-    ( { model | page = currentPage }
+    ( { model | page = currentPage, activeItemsPage = activeItemsPage}
     , Cmd.batch [ existingCommands, mappedPageCommands ]
     )
 
@@ -178,7 +181,9 @@ urlUpdate url model =
 
                         _ = Debug.log "Items page number: " pageNumber
                     in
-                    ( { model | page = (ListItemsPage pageModel) }, Cmd.map ListItemsPageMsg pageCommands)
+                    ( { model | page = (ListItemsPage pageModel)
+                              , activeItemsPage = Just pageNumber}
+                    , Cmd.map ListItemsPageMsg pageCommands)
 
                 Route.NewItem ->
                     let
@@ -190,7 +195,7 @@ urlUpdate url model =
                 Route.Item itemId ->
                     let
                         ( pageModel, pageCommands ) =
-                            EditItem.init itemId model.navKey
+                            EditItem.init itemId model.navKey (getActiveItemsPage model.activeItemsPage)
                     in
                     ( { model | page = (ItemPage pageModel) }, Cmd.map ItemPageMsg pageCommands )
 
