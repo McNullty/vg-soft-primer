@@ -13,7 +13,7 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 
 @Slf4j
 @Configuration
-public class MyWebConfig implements WebMvcConfigurer {
+public class ForwardingRequestsConfiguration implements WebMvcConfigurer {
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
