@@ -19,6 +19,8 @@ public class ForwardingRequestsConfiguration implements WebMvcConfigurer {
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     registry.addResourceHandler("/**/*")
             .addResourceLocations("classpath:/public/")
+            // TODO: Enable this in production, maybe make separate configuration for prod environment
+            .setCachePeriod(31556926)
             .resourceChain(true)
             .addResolver(new PathResourceResolver() {
               @Override
