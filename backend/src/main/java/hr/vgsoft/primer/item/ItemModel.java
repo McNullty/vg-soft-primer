@@ -21,8 +21,9 @@ public class ItemModel extends RepresentationModel<ItemModel> {
     this.name = item.getName();
     this.description = item.getDescription();
 
+    @SuppressWarnings("ConstantConditions")
     final Link selfRelLink = WebMvcLinkBuilder
-            .linkTo(WebMvcLinkBuilder.methodOn(ItemController.class).findItem(item.getUuid()))
+            .linkTo(WebMvcLinkBuilder.methodOn(ItemController.class).findItem(item.getUuid(), null))
             .withSelfRel()
             ;
 

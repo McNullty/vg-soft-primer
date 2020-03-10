@@ -17,6 +17,7 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.ExposesResourceFor;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -72,17 +74,33 @@ public class ItemController {
   @GetMapping(
           value = "/{itemUuid}",
           produces = {MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public ResponseEntity<ItemModel> findItem(@PathVariable final UUID itemUuid) {
+  public ResponseEntity<ItemModel> findItem(@PathVariable final UUID itemUuid,
+                                            @RequestHeader HttpHeaders headers) {
+
+    log.debug("If-None-Match: {}", headers.getIfNoneMatch() );
+    final Optional<String> receivedEtag = headers.getIfNoneMatch().stream().findFirst();
+
     final Item item = itemService.getItemByUuid(itemUuid);
+
+    String calculatedEtag = DigestUtils.md5DigestAsHex(item.getVersion().toString().getBytes());
+    log.debug("Calculated etag: {}", calculatedEtag);
+
+    if (receivedEtag.isPresent()) {
+      final String existingEtag = receivedEtag.get();
+
+      final String etag = existingEtag.substring(1, existingEtag.length() - 1);
+
+      if(etag.equals(calculatedEtag)) {
+        ResponseEntity.status(HttpStatus.NOT_MODIFIED);
+      }
+    }
 
     final ItemModel itemModel = new ItemModel(item);
 
-    String etag = DigestUtils.md5DigestAsHex(item.getVersion().toString().getBytes());
-    log.debug("Calculated etag: {}", etag);
 
     return ResponseEntity.ok()
             .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS))
-            .eTag(etag)
+            .eTag(calculatedEtag)
             .body(itemModel)
             ;
   }
