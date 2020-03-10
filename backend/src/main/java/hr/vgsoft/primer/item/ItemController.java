@@ -2,8 +2,11 @@ package hr.vgsoft.primer.item;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
+
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,9 +16,11 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.ExposesResourceFor;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/items")
 @ExposesResourceFor(Item.class)
@@ -71,7 +77,14 @@ public class ItemController {
 
     final ItemModel itemModel = new ItemModel(item);
 
-    return ResponseEntity.ok(itemModel);
+    String etag = DigestUtils.md5DigestAsHex(item.getVersion().toString().getBytes());
+    log.debug("Calculated etag: {}", etag);
+
+    return ResponseEntity.ok()
+            .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS))
+            .eTag(etag)
+            .body(itemModel)
+            ;
   }
 
   @PutMapping(value = "/{itemUuid}")
