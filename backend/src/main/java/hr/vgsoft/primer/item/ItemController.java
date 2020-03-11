@@ -60,20 +60,10 @@ public class ItemController {
 
     final Page<Item> items = itemService.findAll(pageable);
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutputStream oos = new ObjectOutputStream(bos);
-    oos.writeObject(items);
+    String calculatedEtag = getEtagFromPageOfItems(items);
 
-    String calculatedEtag = DigestUtils.md5DigestAsHex(bos.toByteArray());
-
-    if (receivedEtag.isPresent()) {
-      final String existingEtag = receivedEtag.get();
-
-      final String etag = existingEtag.substring(1, existingEtag.length() - 1);
-
-      if(etag.equals(calculatedEtag)) {
-        ResponseEntity.status(HttpStatus.NOT_MODIFIED);
-      }
+    if (etagsMatching(receivedEtag.orElse("\"NOT-ETAG\""), calculatedEtag)) {
+      return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
     }
 
     return ResponseEntity.ok()
@@ -109,17 +99,11 @@ public class ItemController {
 
     final Item item = itemService.getItemByUuid(itemUuid);
 
-    String calculatedEtag = DigestUtils.md5DigestAsHex(item.getVersion().toString().getBytes());
+    String calculatedEtag = getEtagFromItem(item);
     log.debug("Calculated etag: {}", calculatedEtag);
 
-    if (receivedEtag.isPresent()) {
-      final String existingEtag = receivedEtag.get();
-
-      final String etag = existingEtag.substring(1, existingEtag.length() - 1);
-
-      if(etag.equals(calculatedEtag)) {
-        ResponseEntity.status(HttpStatus.NOT_MODIFIED);
-      }
+    if (etagsMatching(receivedEtag.orElse("\"NOT-ETAG\""), calculatedEtag)) {
+      return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
     }
 
     final ItemModel itemModel = new ItemModel(item);
@@ -149,5 +133,23 @@ public class ItemController {
 
     // TODO: Check correct response
     return ResponseEntity.ok().build();
+  }
+
+  private String getEtagFromItem(final Item item) {
+    return DigestUtils.md5DigestAsHex(item.getVersion().toString().getBytes());
+  }
+
+  private String getEtagFromPageOfItems(final Page<Item> items) throws IOException {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(bos);
+    oos.writeObject(items);
+
+    return DigestUtils.md5DigestAsHex(bos.toByteArray());
+  }
+
+  private boolean etagsMatching(String receivedEtag, final String calculatedEtag) {
+    final String etag = receivedEtag.substring(1, receivedEtag.length() - 1);
+
+    return etag.equals(calculatedEtag);
   }
 }
