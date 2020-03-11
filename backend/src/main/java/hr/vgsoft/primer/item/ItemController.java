@@ -1,5 +1,8 @@
 package hr.vgsoft.primer.item;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -49,11 +52,35 @@ public class ItemController {
 
   @GetMapping
   public ResponseEntity<PagedModel<ItemModel>> findAllItems(
-          final Pageable pageable, final PagedResourcesAssembler<Item> assembler) {
+          final Pageable pageable, final PagedResourcesAssembler<Item> assembler,
+          @RequestHeader final HttpHeaders headers) throws IOException {
+
+    log.debug("If-None-Match: {}", headers.getIfNoneMatch() );
+    final Optional<String> receivedEtag = headers.getIfNoneMatch().stream().findFirst();
 
     final Page<Item> items = itemService.findAll(pageable);
 
-    return ResponseEntity.ok(assembler.toModel(items, itemModelAssembler));
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(bos);
+    oos.writeObject(items);
+
+    String calculatedEtag = DigestUtils.md5DigestAsHex(bos.toByteArray());
+
+    if (receivedEtag.isPresent()) {
+      final String existingEtag = receivedEtag.get();
+
+      final String etag = existingEtag.substring(1, existingEtag.length() - 1);
+
+      if(etag.equals(calculatedEtag)) {
+        ResponseEntity.status(HttpStatus.NOT_MODIFIED);
+      }
+    }
+
+    return ResponseEntity.ok()
+            .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS))
+            .eTag(calculatedEtag)
+            .body(assembler.toModel(items, itemModelAssembler))
+            ;
   }
 
   @PostMapping
@@ -74,8 +101,8 @@ public class ItemController {
   @GetMapping(
           value = "/{itemUuid}",
           produces = {MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE})
-  public ResponseEntity<ItemModel> findItem(@PathVariable final UUID itemUuid,
-                                            @RequestHeader HttpHeaders headers) {
+  public ResponseEntity<ItemModel> findItem(
+          @PathVariable final UUID itemUuid, @RequestHeader final HttpHeaders headers) {
 
     log.debug("If-None-Match: {}", headers.getIfNoneMatch() );
     final Optional<String> receivedEtag = headers.getIfNoneMatch().stream().findFirst();

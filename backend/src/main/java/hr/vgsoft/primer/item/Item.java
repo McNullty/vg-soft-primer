@@ -1,6 +1,7 @@
 package hr.vgsoft.primer.item;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.io.Serializable;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -21,7 +22,7 @@ import org.hibernate.annotations.DynamicUpdate;
 @NoArgsConstructor
 @Setter
 @Table(name = "items")
-public class Item {
+public class Item implements Serializable {
 
   @Id
   @Column
