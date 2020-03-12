@@ -48,7 +48,9 @@ getEtagFromHeader : Dict String String -> Maybe String
 getEtagFromHeader headers =
     Dict.get "etag" headers
 
-
+{-|
+    This function uses header metadata and body from response to create ItemsResponse type
+-}
 processMetadataAndBody : Metadata -> String -> Result Decode.Error ItemsResponse
 processMetadataAndBody metadata body =
     let
