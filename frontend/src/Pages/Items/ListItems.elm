@@ -1,4 +1,4 @@
-module Pages.Items.ListItems exposing (Model, Msg, init, update, view, pagingData)
+module Pages.Items.ListItems exposing (Model, Msg, init, update, view, pagingData, ItemsResponse, itemsResponseDecoder)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)
@@ -9,27 +9,24 @@ import Bootstrap.Pagination as Pagination
 import Bootstrap.Spinner as Spinner
 import Bootstrap.Table as Table exposing (Row)
 import Bootstrap.Utilities.Spacing as Spacing
+import CommonTypes exposing (PagingData)
+import Dict exposing (Dict)
 import Error exposing (buildErrorMessage, viewError)
 import Html exposing (Html, div, h1, span, text)
 import Html.Attributes exposing (class, href)
-import Http
-import Json.Decode as Decode exposing (Decoder, int, list)
-import Json.Decode.Pipeline exposing (optionalAt, required, requiredAt)
+import Http exposing (Error(..), Expect, Metadata, expectStringResponse)
+import Json.Decode as Decode exposing (Decoder, decodeString, errorToString, int, list)
+import Json.Decode.Pipeline exposing (hardcoded, optionalAt, required, requiredAt)
 import List exposing (length, range)
 import Pages.Items.Item as Item exposing (Item, ItemId, idToString, itemDecoder)
 import RemoteData exposing (RemoteData(..), WebData)
+import Result as Http
 
-
-type alias Page =
-    { size : Int
-    , totalElements : Int
-    , totalPages : Int
-    , number : Int
-    }
 
 type alias ItemsResponse =
     { items : (List Item)
-    , page : Page
+    , page : PagingData
+    , etag : Maybe String
     }
 
 type alias Model =
@@ -62,8 +59,47 @@ fetchItems pageNumber =
         { url = "/api/items?page=" ++ String.fromInt pageNumber
         , expect =
             itemsResponseDecoder
-                |> Http.expectJson (RemoteData.fromResult >> ItemsReceived)
+                |> customExpectJson (RemoteData.fromResult >> ItemsReceived)
         }
+
+customExpectJson : (Result Http.Error ItemsResponse -> msg) -> Decoder ItemsResponse -> Http.Expect msg
+customExpectJson toMsg bodyDecoder =
+--TODO: This function should be refactored to return meaningful message in case of server error or parsing error
+    expectStringResponse toMsg <|
+    \response ->
+        let
+            _ = Debug.log "HttpClient Response" response
+        in
+      case response of
+        Http.BadUrl_ url ->
+          Err (Http.BadUrl url)
+
+        Http.Timeout_ ->
+          Err Http.Timeout
+
+        Http.NetworkError_ ->
+          Err Http.NetworkError
+
+        Http.BadStatus_ metadata body ->
+          Err (Http.BadStatus metadata.statusCode)
+
+        Http.GoodStatus_ metadata body ->
+          let
+              etagValue = getEtagFromHeader metadata.headers
+              returnValue = case decodeString bodyDecoder body of
+                Ok value ->
+                  let
+                      newValue = {value | etag = etagValue}
+                  in
+                  Ok newValue
+                Err err ->
+                  Err (Http.BadStatus metadata.statusCode)
+          in
+          returnValue
+
+getEtagFromHeader : Dict String String -> Maybe String
+getEtagFromHeader headers =
+    Dict.get "etag" headers
 
 
 deleteItem : ItemId -> Cmd Msg
@@ -83,11 +119,12 @@ itemsResponseDecoder =
     Decode.succeed ItemsResponse
         |> optionalAt ["_embedded", "items"] (list itemDecoder) []
         |> requiredAt ["page"] pageDecoder
+        |> hardcoded Nothing
 
 
-pageDecoder : Decoder Page
+pageDecoder : Decoder PagingData
 pageDecoder =
-    Decode.succeed Page
+    Decode.succeed PagingData
         |> required "size" int
         |> required "totalElements" int
         |> required "totalPages" int
