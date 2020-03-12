@@ -63,7 +63,10 @@ public class ItemController {
     String calculatedEtag = getEtagFromPageOfItems(items);
 
     if (etagsMatching(receivedEtag.orElse("\"NOT-ETAG\""), calculatedEtag)) {
-      return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+      return ResponseEntity
+              .status(HttpStatus.NOT_MODIFIED)
+              .eTag(calculatedEtag)
+              .build();
     }
 
     return ResponseEntity.ok()
@@ -103,7 +106,10 @@ public class ItemController {
     log.debug("Calculated etag: {}", calculatedEtag);
 
     if (etagsMatching(receivedEtag.orElse("\"NOT-ETAG\""), calculatedEtag)) {
-      return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+      return ResponseEntity
+              .status(HttpStatus.NOT_MODIFIED)
+              .eTag(calculatedEtag)
+              .build();
     }
 
     final ItemModel itemModel = new ItemModel(item);
