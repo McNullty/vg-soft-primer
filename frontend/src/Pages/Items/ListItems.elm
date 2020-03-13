@@ -22,9 +22,11 @@ import Result as Http
 
 type alias Model =
     { itemsResponse : WebData ItemsResponse
-    , deleteError : Maybe String
+    , errorMessage : Maybe String
     , activePage : Int
+    , etag : Maybe String
     }
+
 
 type Msg
     = FetchItems
@@ -33,15 +35,18 @@ type Msg
     | ItemDeleted (Result Http.Error String)
     | Pagination Int
 
+
 init : Int -> ( Model, Cmd Msg )
 init pageNumber =
-    ( initialModel pageNumber, fetchItems pageNumber convertToMsg)
+    ( initialModel pageNumber, fetchItems pageNumber Nothing convertToMsg)
+
 
 initialModel : Int -> Model
 initialModel pageNumber =
     { itemsResponse = RemoteData.Loading
-    , deleteError = Nothing
+    , errorMessage = Nothing
     , activePage = pageNumber
+    , etag = Nothing
     }
 
 
@@ -70,12 +75,12 @@ update msg model =
     in
     case msg of
         FetchItems ->
-            ( { model | itemsResponse = RemoteData.Loading }, fetchItems model.activePage convertToMsg )
+            ( { model | itemsResponse = RemoteData.Loading }, fetchItems model.activePage model.etag convertToMsg )
 
         ResponseReceived results ->
             case results of
                 FetchError error ->
-                    ( { model | deleteError = Just  error }
+                    ( { model | errorMessage = Just  error }
                     , Cmd.none
                     )
 
@@ -87,11 +92,16 @@ update msg model =
                                 Success res -> length res.body.items
                                 _ -> 0
 
+                        etag =
+                            case webData of
+                                Success res -> res.etag
+                                _ -> Nothing
+
                         _ = Debug.log "Got items" numberOfItems
                     in
                     case numberOfItems of
-                        0 -> ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) convertToMsg )
-                        _ -> ( { model | itemsResponse = webData }, Cmd.none )
+                        0 -> ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) model.etag convertToMsg )
+                        _ -> ( { model | itemsResponse = webData, etag = etag }, Cmd.none )
 
 
                 ItemsNotModified ->
@@ -102,10 +112,10 @@ update msg model =
             ( model, deleteItem itemId )
 
         ItemDeleted (Ok _) ->
-            ( model, fetchItems model.activePage convertToMsg )
+            ( model, fetchItems model.activePage model.etag convertToMsg )
 
         ItemDeleted (Err error) ->
-            ( { model | deleteError = Just (buildErrorMessage error) }
+            ( { model | errorMessage = Just (buildErrorMessage error) }
             , Cmd.none
             )
 

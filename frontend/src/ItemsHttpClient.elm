@@ -8,6 +8,7 @@ import Json.Decode.Pipeline as Pipeline
 import Pages.Items.Item exposing (Item, ItemId(..), itemDecoder)
 import RemoteData exposing (WebData)
 
+
 type alias ItemsResponseBody =
     { items : (List Item)
     , page : PagingData
@@ -18,6 +19,12 @@ type alias ItemsResponse =
     { body : ItemsResponseBody
     , etag : Maybe String
     }
+
+
+type ItemsApiResponses
+    = Success ItemsResponse
+    | NotModified
+    | CustomError String
 
 
 type FetchingResults
@@ -45,6 +52,7 @@ itemsResponseDecoder =
 getEtagFromHeader : Dict String String -> Maybe String
 getEtagFromHeader headers =
     Dict.get "etag" headers
+
 
 {-|
     This function uses header metadata and body from response to create ItemsResponse type
@@ -85,10 +93,6 @@ customMessageFromResult converter result =
     in
     converter fetchingResults
 
-type ItemsApiResponses
-    = Success ItemsResponse
-    | NotModified
-    | CustomError String
 
 
 {-|
@@ -124,14 +128,22 @@ customResponseToResult response =
                  _ -> Result.Ok (CustomError
                         ("Good status but with unknown value: " ++ (String.fromInt metadata.statusCode)))
 
+
 customExpectFunction : (FetchingResults -> a) -> Http.Expect a
 customExpectFunction converter =
         expectStringResponse (customMessageFromResult converter) customResponseToResult
 
 
-fetchItems : Int -> (FetchingResults -> a) -> Cmd a
-fetchItems pageNumber convertToMsg =
-    Http.get
-        { url = "/api/items?page=" ++ String.fromInt pageNumber
+fetchItems : Int -> Maybe String -> (FetchingResults -> a) -> Cmd a
+fetchItems pageNumber etag convertToMsg =
+    Http.request
+        { method = "GET"
+        , headers = case etag of
+            Just tag -> [Http.header "If-None-Match" tag]
+            Nothing -> []
+        , url = "/api/items?page=" ++ String.fromInt pageNumber
+        , body = Http.emptyBody
         , expect = customExpectFunction convertToMsg
+        , timeout = Nothing
+        , tracker = Nothing
         }
