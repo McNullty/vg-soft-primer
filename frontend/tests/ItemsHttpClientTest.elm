@@ -1,12 +1,12 @@
-module ItemsPageTest exposing (..)
+module ItemsHttpClientTest exposing (..)
 
 import Dict exposing (Dict)
 import Expect
 import Http exposing (Metadata, Response(..))
-import ItemsHttpClient
+import ItemsHttpClient exposing (FetchingResults(..))
 import Json.Decode as Decode exposing (Error(..))
 import Pages.Items.Item exposing (Item, ItemId(..))
-import Pages.Items.ListItems as ListItems exposing (Msg(..))
+import Pages.Items.ListItems as ListItems exposing (Msg(..), convertToMsg)
 import RemoteData exposing (WebData)
 import Test exposing (Test, describe, test)
 
@@ -45,7 +45,9 @@ suite =
                         metadata = createMetadata
                         body = createBody
 
-                        result = ItemsHttpClient.customMessageFromResult (ItemsHttpClient.processMetadataAndBody metadata body)
+                        -- TODO: make call chain more readable
+                        result = ItemsHttpClient.customMessageFromResult
+                            convertToMsg (ItemsHttpClient.customResponseToResult (GoodStatus_ metadata body))
 
                         expected = createExpectedMsg
                     in
@@ -100,4 +102,5 @@ itemsResponseFromResult result =
 
 createExpectedMsg : ListItems.Msg
 createExpectedMsg =
-    ItemsReceived (RemoteData.Success (itemsResponseFromResult createExpectedResult))
+    -- TODO: make call chain more readable
+    ResponseReceived (ItemsReceived (RemoteData.Success (itemsResponseFromResult createExpectedResult)))

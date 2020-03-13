@@ -1,4 +1,4 @@
-module Pages.Items.ListItems exposing (Model, Msg(..), init, update, view, pagingData)
+module Pages.Items.ListItems exposing (Model, Msg(..), init, update, view, pagingData, convertToMsg)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)
