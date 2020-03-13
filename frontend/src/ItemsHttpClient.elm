@@ -20,7 +20,7 @@ type alias ItemsResponse =
     }
 
 
-type Msg
+type FetchingResults
     = FetchError String
     | ItemsReceived (WebData ItemsResponse)
     | ItemsNotModified
@@ -70,17 +70,20 @@ processMetadataAndBody metadata body =
 
     This function will take results form parser and create application message depending on result
 -}
-customMessageFromResult : (Result Decode.Error ItemsApiResponses -> Msg)
-customMessageFromResult result =
-    case result of
-        Result.Ok value ->
-            case value of
-                Success itemResponse -> ItemsReceived (RemoteData.Success itemResponse)
-                NotModified -> ItemsNotModified
-                CustomError errorMessage-> FetchError errorMessage
-        Result.Err errorMessage ->
-            FetchError ("Custom error message" ++ Decode.errorToString errorMessage)
-
+customMessageFromResult : (FetchingResults -> a) -> (Result Decode.Error ItemsApiResponses -> a)
+customMessageFromResult converter result =
+    let
+        fetchingResults =
+            case result of
+                Result.Ok value ->
+                    case value of
+                        Success itemResponse -> ItemsReceived (RemoteData.Success itemResponse)
+                        NotModified -> ItemsNotModified
+                        CustomError errorMessage-> FetchError errorMessage
+                Result.Err errorMessage ->
+                    FetchError ("Custom error message" ++ Decode.errorToString errorMessage)
+    in
+    converter fetchingResults
 
 type ItemsApiResponses
     = Success ItemsResponse
@@ -107,10 +110,10 @@ customResponseToResult response =
          GoodStatus_ metadata body ->
              case metadata.statusCode of
                  200 -> let
-                            response = processMetadataAndBody metadata body
+                            processingResponse = processMetadataAndBody metadata body
 
                             apiResponse =
-                                case response of
+                                case processingResponse of
                                     Result.Ok value -> Result.Ok (Success value)
                                     Result.Err error ->
                                         Result.Ok (CustomError ("Error while parsing: " ++ Decode.errorToString error))
@@ -118,7 +121,17 @@ customResponseToResult response =
                         in
                         apiResponse
                  305 -> Result.Ok NotModified
+                 _ -> Result.Ok (CustomError
+                        ("Good status but with unknown value: " ++ (String.fromInt metadata.statusCode)))
 
-customExpectJson : Http.Expect Msg
-customExpectJson  =
-    expectStringResponse customMessageFromResult customResponseToResult
+customExpectFunction : (FetchingResults -> a) -> Http.Expect a
+customExpectFunction converter =
+        expectStringResponse (customMessageFromResult converter) customResponseToResult
+
+
+fetchItems : Int -> (FetchingResults -> a) -> Cmd a
+fetchItems pageNumber convertToMsg =
+    Http.get
+        { url = "/api/items?page=" ++ String.fromInt pageNumber
+        , expect = customExpectFunction convertToMsg
+        }

@@ -1,4 +1,4 @@
-module Pages.Items.ListItems exposing (Model, Msg, init, update, view, pagingData, ItemsResponse, itemsResponseDecoder)
+module Pages.Items.ListItems exposing (Model, Msg(..), init, update, view, pagingData)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)
@@ -9,25 +9,16 @@ import Bootstrap.Pagination as Pagination
 import Bootstrap.Spinner as Spinner
 import Bootstrap.Table as Table exposing (Row)
 import Bootstrap.Utilities.Spacing as Spacing
-import CommonTypes exposing (PagingData)
-import Dict exposing (Dict)
 import Error exposing (buildErrorMessage, viewError)
 import Html exposing (Html, div, h1, span, text)
 import Html.Attributes exposing (class, href)
-import Http exposing (Error(..), Expect, Metadata, expectStringResponse)
-import Json.Decode as Decode exposing (Decoder, decodeString, errorToString, int, list)
-import Json.Decode.Pipeline exposing (hardcoded, optionalAt, required, requiredAt)
+import Http exposing (Error(..), Expect, Metadata)
+import ItemsHttpClient exposing (FetchingResults(..), ItemsResponse, fetchItems)
 import List exposing (length, range)
-import Pages.Items.Item as Item exposing (Item, ItemId, idToString, itemDecoder)
+import Pages.Items.Item as Item exposing (Item, ItemId, idToString)
 import RemoteData exposing (RemoteData(..), WebData)
 import Result as Http
 
-
-type alias ItemsResponse =
-    { items : (List Item)
-    , page : PagingData
-    , etag : Maybe String
-    }
 
 type alias Model =
     { itemsResponse : WebData ItemsResponse
@@ -37,14 +28,14 @@ type alias Model =
 
 type Msg
     = FetchItems
-    | ItemsReceived (WebData ItemsResponse)
+    | ResponseReceived FetchingResults
     | DeleteItem ItemId
     | ItemDeleted (Result Http.Error String)
     | Pagination Int
 
 init : Int -> ( Model, Cmd Msg )
 init pageNumber =
-    ( initialModel pageNumber, fetchItems pageNumber)
+    ( initialModel pageNumber, fetchItems pageNumber convertToMsg)
 
 initialModel : Int -> Model
 initialModel pageNumber =
@@ -53,53 +44,10 @@ initialModel pageNumber =
     , activePage = pageNumber
     }
 
-fetchItems : Int -> Cmd Msg
-fetchItems pageNumber =
-    Http.get
-        { url = "/api/items?page=" ++ String.fromInt pageNumber
-        , expect =
-            itemsResponseDecoder
-                |> customExpectJson (RemoteData.fromResult >> ItemsReceived)
-        }
 
-customExpectJson : (Result Http.Error ItemsResponse -> msg) -> Decoder ItemsResponse -> Http.Expect msg
-customExpectJson toMsg bodyDecoder =
---TODO: This function should be refactored to return meaningful message in case of server error or parsing error
-    expectStringResponse toMsg <|
-    \response ->
-        let
-            _ = Debug.log "HttpClient Response" response
-        in
-      case response of
-        Http.BadUrl_ url ->
-          Err (Http.BadUrl url)
-
-        Http.Timeout_ ->
-          Err Http.Timeout
-
-        Http.NetworkError_ ->
-          Err Http.NetworkError
-
-        Http.BadStatus_ metadata body ->
-          Err (Http.BadStatus metadata.statusCode)
-
-        Http.GoodStatus_ metadata body ->
-          let
-              etagValue = getEtagFromHeader metadata.headers
-              returnValue = case decodeString bodyDecoder body of
-                Ok value ->
-                  let
-                      newValue = {value | etag = etagValue}
-                  in
-                  Ok newValue
-                Err err ->
-                  Err (Http.BadStatus metadata.statusCode)
-          in
-          returnValue
-
-getEtagFromHeader : Dict String String -> Maybe String
-getEtagFromHeader headers =
-    Dict.get "etag" headers
+convertToMsg : FetchingResults -> Msg
+convertToMsg result =
+    ResponseReceived result
 
 
 deleteItem : ItemId -> Cmd Msg
@@ -114,21 +62,6 @@ deleteItem itemId =
         , tracker = Nothing
         }
 
-itemsResponseDecoder : Decoder ItemsResponse
-itemsResponseDecoder =
-    Decode.succeed ItemsResponse
-        |> optionalAt ["_embedded", "items"] (list itemDecoder) []
-        |> requiredAt ["page"] pageDecoder
-        |> hardcoded Nothing
-
-
-pageDecoder : Decoder PagingData
-pageDecoder =
-    Decode.succeed PagingData
-        |> required "size" int
-        |> required "totalElements" int
-        |> required "totalPages" int
-        |> required "number" int
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -137,26 +70,39 @@ update msg model =
     in
     case msg of
         FetchItems ->
-            ( { model | itemsResponse = RemoteData.Loading }, fetchItems model.activePage )
+            ( { model | itemsResponse = RemoteData.Loading }, fetchItems model.activePage convertToMsg )
 
-        ItemsReceived response ->
-            let
-                numberOfItems =
-                    case response of
-                        Success res -> length res.items
-                        _ -> 0
+        ResponseReceived results ->
+            case results of
+                FetchError error ->
+                    ( { model | deleteError = Just  error }
+                    , Cmd.none
+                    )
 
-                _ = Debug.log "Got items" numberOfItems
-            in
-            case numberOfItems of
-                0 -> ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) )
-                _ -> ( { model | itemsResponse = response }, Cmd.none )
+
+                ItemsReceived webData ->
+                    let
+                        numberOfItems =
+                            case webData of
+                                Success res -> length res.body.items
+                                _ -> 0
+
+                        _ = Debug.log "Got items" numberOfItems
+                    in
+                    case numberOfItems of
+                        0 -> ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) convertToMsg )
+                        _ -> ( { model | itemsResponse = webData }, Cmd.none )
+
+
+                ItemsNotModified ->
+                    ( model, Cmd.none)
+
 
         DeleteItem itemId ->
             ( model, deleteItem itemId )
 
         ItemDeleted (Ok _) ->
-            ( model, fetchItems model.activePage )
+            ( model, fetchItems model.activePage convertToMsg )
 
         ItemDeleted (Err error) ->
             ( { model | deleteError = Just (buildErrorMessage error) }
@@ -227,7 +173,7 @@ viewItems itemsResponse =
                 , Table.th [] [ text "Description" ]
                 ]
                 , Table.tbody []
-                    (List.map viewItem itemsResponse.items)
+                    (List.map viewItem itemsResponse.body.items)
             )
         ]
 
@@ -267,7 +213,7 @@ pagingDataFromModel : Model -> List Int
 pagingDataFromModel model =
     case model.itemsResponse of
         RemoteData.Success itemsResponse ->
-            pagingData itemsResponse.page.totalPages
+            pagingData itemsResponse.body.page.totalPages
 
         _ ->
             []
