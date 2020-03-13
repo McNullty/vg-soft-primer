@@ -25,6 +25,7 @@ type alias Model =
     , errorMessage : Maybe String
     , activePage : Int
     , etag : Maybe String
+    , cachedItemsResponse : Maybe (WebData ItemsResponse)
     }
 
 
@@ -47,6 +48,7 @@ initialModel pageNumber =
     , errorMessage = Nothing
     , activePage = pageNumber
     , etag = Nothing
+    , cachedItemsResponse = Nothing
     }
 
 
@@ -101,11 +103,22 @@ update msg model =
                     in
                     case numberOfItems of
                         0 -> ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) model.etag convertToMsg )
-                        _ -> ( { model | itemsResponse = webData, etag = etag }, Cmd.none )
+                        _ -> ( { model | itemsResponse = webData, etag = etag, cachedItemsResponse = Just webData }, Cmd.none )
 
 
                 ItemsNotModified ->
-                    ( model, Cmd.none)
+                    let
+                        cachedItemsResponse =
+                            case model.cachedItemsResponse of
+                                Just itemResponse -> itemResponse
+                                Nothing -> RemoteData.Loading
+
+                        error =
+                            case model.cachedItemsResponse of
+                                Just _ -> Nothing
+                                Nothing -> Just "Not found anything in cache"
+                    in
+                    (  { model | itemsResponse = cachedItemsResponse, errorMessage = error}, Cmd.none)
 
 
         DeleteItem itemId ->

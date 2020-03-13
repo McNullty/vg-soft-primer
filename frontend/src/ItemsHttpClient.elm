@@ -102,31 +102,37 @@ customMessageFromResult converter result =
 -}
 customResponseToResult : Response String -> Result Decode.Error ItemsApiResponses
 customResponseToResult response =
-     case response of
-         BadUrl_ url ->
-             Result.Ok (CustomError ("Bad url: " ++ url))
-         Timeout_ ->
-             Result.Ok (CustomError "Timeout")
-         NetworkError_ ->
-             Result.Ok (CustomError "Network error")
-         BadStatus_ _ body ->
-             Result.Ok (CustomError body)
-         GoodStatus_ metadata body ->
-             case metadata.statusCode of
-                 200 -> let
-                            processingResponse = processMetadataAndBody metadata body
-
-                            apiResponse =
-                                case processingResponse of
-                                    Result.Ok value -> Result.Ok (Success value)
-                                    Result.Err error ->
-                                        Result.Ok (CustomError ("Error while parsing: " ++ Decode.errorToString error))
-
-                        in
-                        apiResponse
-                 305 -> Result.Ok NotModified
-                 _ -> Result.Ok (CustomError
-                        ("Good status but with unknown value: " ++ (String.fromInt metadata.statusCode)))
+    let
+        _ = Debug.log "Response" response
+    in
+    case response of
+        BadUrl_ url ->
+            Result.Ok (CustomError ("Bad url: " ++ url))
+        Timeout_ ->
+            Result.Ok (CustomError "Timeout")
+        NetworkError_ ->
+            Result.Ok (CustomError "Network error")
+        BadStatus_ metadata body ->
+            let
+                _ = Debug.log "Metadata status" metadata.statusCode
+                _ = Debug.log "Bad status body" body
+            in
+            case metadata.statusCode of
+                304 -> Result.Ok NotModified
+                _ -> Result.Ok (CustomError ("Mad status" ++ String.fromInt metadata.statusCode ++ body))
+        GoodStatus_ metadata body ->
+            case metadata.statusCode of
+                200 -> let
+                           processingResponse = processMetadataAndBody metadata body
+                           apiResponse =
+                               case processingResponse of
+                                   Result.Ok value -> Result.Ok (Success value)
+                                   Result.Err error ->
+                                       Result.Ok (CustomError ("Error while parsing: " ++ Decode.errorToString error))
+                       in
+                       apiResponse
+                _ -> Result.Ok (CustomError
+                       ("Good status but with unknown value: " ++ (String.fromInt metadata.statusCode)))
 
 
 customExpectFunction : (FetchingResults -> a) -> Http.Expect a
