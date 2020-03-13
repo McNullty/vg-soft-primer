@@ -1,84 +1,14 @@
 module ItemsPageTest exposing (..)
 
-import CommonTypes exposing (PagingData)
 import Dict exposing (Dict)
 import Expect
-import Http exposing (Metadata)
+import Http exposing (Metadata, Response(..))
+import ItemsHttpClient
 import Json.Decode as Decode exposing (Error(..))
-import Json.Decode.Pipeline as Pipeline
-import Pages.Items.Item exposing (Item, ItemId(..), itemDecoder)
+import Pages.Items.Item exposing (Item, ItemId(..))
+import Pages.Items.ListItems as ListItems exposing (Msg(..))
 import RemoteData exposing (WebData)
 import Test exposing (Test, describe, test)
-
-
-type alias ItemsResponseBody =
-    { items : (List Item)
-    , page : PagingData
-    }
-
-
-type alias ItemsResponse =
-    { body : ItemsResponseBody
-    , etag : Maybe String
-    }
-
-
-type Msg
-    = FetchError String
-    | ItemsReceived (WebData ItemsResponse)
-
-
-pageDecoder : Decode.Decoder PagingData
-pageDecoder =
-    Decode.succeed PagingData
-        |> Pipeline.required "size" Decode.int
-        |> Pipeline.required "totalElements" Decode.int
-        |> Pipeline.required "totalPages" Decode.int
-        |> Pipeline.required "number" Decode.int
-
-
-itemsResponseDecoder : Decode.Decoder ItemsResponseBody
-itemsResponseDecoder =
-    Decode.succeed ItemsResponseBody
-            |> Pipeline.optionalAt ["_embedded", "items"] (Decode.list itemDecoder) []
-            |> Pipeline.requiredAt ["page"] pageDecoder
-
-
-getEtagFromHeader : Dict String String -> Maybe String
-getEtagFromHeader headers =
-    Dict.get "etag" headers
-
-{-|
-    This function uses header metadata and body from response to create ItemsResponse type
--}
-processMetadataAndBody : Metadata -> String -> Result Decode.Error ItemsResponse
-processMetadataAndBody metadata body =
-    let
-        etagResult = getEtagFromHeader metadata.headers
-
-        bodyResult = Decode.decodeString itemsResponseDecoder body
-        response  =
-            case bodyResult of
-                Result.Ok value ->  Result.Ok { body = value
-                                              , etag = etagResult
-                                              }
-                Result.Err err -> Result.Err err
-
-    in
-    response
-
-
-{-| This function takes parsed result that was already put in type and creates appropriate application message
-
-    This function will take results form parser and create application message depending on result
--}
-customFromResult : (Result Error ItemsResponse -> Msg)
-customFromResult result =
-    case result of
-        Result.Ok value -> ItemsReceived (RemoteData.Success value)
-        Result.Err errorMessage ->
-            FetchError ("Custom error message" ++ Decode.errorToString errorMessage)
-
 
 suite : Test
 suite =
@@ -89,7 +19,7 @@ suite =
                     let
                         body = createBody
 
-                        result = Decode.decodeString itemsResponseDecoder body
+                        result = Decode.decodeString ItemsHttpClient.itemsResponseDecoder body
 
                         expected = createExpectedResultBody
                     in
@@ -102,7 +32,7 @@ suite =
                         metadata = createMetadata
                         body = createBody
 
-                        result = processMetadataAndBody metadata body
+                        result = ItemsHttpClient.processMetadataAndBody metadata body
 
                         expected = createExpectedResult
                     in
@@ -115,7 +45,7 @@ suite =
                         metadata = createMetadata
                         body = createBody
 
-                        result = customFromResult (processMetadataAndBody metadata body)
+                        result = ItemsHttpClient.customMessageFromResult (ItemsHttpClient.processMetadataAndBody metadata body)
 
                         expected = createExpectedMsg
                     in
@@ -139,7 +69,7 @@ createMetadata =
         , ("keep-alive","timeout=60")
         , ("transfer-encoding","chunked")] }
 
-createExpectedResultBody : Result Decode.Error ItemsResponseBody
+createExpectedResultBody : Result Decode.Error ItemsHttpClient.ItemsResponseBody
 createExpectedResultBody =
     Result.Ok { items = [{ description = "Description for first item", id = ItemId "ddc56cf6-1736-4f8d-bfb0-8330cd3d3654", name = "TestItem1" },{ description = "Description for second item", id = ItemId "dacf77b6-5e70-439a-8e3b-d2da974d73ff", name = "TestItem2" },{ description = "Description for 3. item", id = ItemId "21fb97c7-53d4-4395-bc1e-d3e085f396a2", name = "TestItem3" },{ description = "Description for 4. item", id = ItemId "8146f000-ff27-40ed-865c-f58889a0f997", name = "TestItem4" },{ description = "Description for 5. item", id = ItemId "107d3693-0733-409c-9617-f50798cb4c4e", name = "TestItem5" },{ description = "Description for 6. item", id = ItemId "80e85bb1-0647-4445-b586-01900c0d5b34", name = "TestItem6" },{ description = "Description for 7. item", id = ItemId "6406e01b-d5c8-4c40-b551-cf49b3379599", name = "TestItem7" },{ description = "Description for 8. item", id = ItemId "b8c05299-2f0e-4acb-b6d3-27494fb4f404", name = "TestItem8" },{ description = "Description for 9. item", id = ItemId "54f3cc02-a7fd-4ca7-b732-e1f3e27c3984", name = "TestItem9" },{ description = "Description for 10. item", id = ItemId "4b66ed66-4610-4454-af38-a15bdd5c5844", name = "TestItem10" },{ description = "Description for 11. item", id = ItemId "461cfa07-f2c4-4d1e-ada9-5c592b461d17", name = "TestItem11" },{ description = "Description for 12. item", id = ItemId "00fadde0-8b5f-49d3-b6fd-d0f44cf065ed", name = "TestItem12" },{ description = "Description for 13. item", id = ItemId "de718ba8-520c-4199-a819-1674e5582bbe", name = "TestItem13" },{ description = "Description for 14. item", id = ItemId "b1e701fe-7188-47d2-8654-7808ced2f6a7", name = "TestItem14" },{ description = "Description for 15. item", id = ItemId "86aa8336-6bd0-440a-97fe-b51e1b9f6f9e", name = "TestItem15" },{ description = "Description for 16. item", id = ItemId "6d952799-5601-432a-9947-adad57bb54db", name = "TestItem16" },{ description = "Description for 17. item", id = ItemId "365aefff-1fb6-4b3e-84a9-18b1a256b76b", name = "TestItem17" },{ description = "Description for 18. item", id = ItemId "0353f12a-6100-49c4-9c13-262c6efe5019", name = "TestItem18" },{ description = "Description for 19. item", id = ItemId "00a9d79c-8642-4f3c-992c-5feff24da334", name = "TestItem19" },{ description = "Description for 20. item", id = ItemId "76cdfb25-3fd2-4f48-b16e-539968d22bba", name = "TestItem20" }]
               , page = { number = 0, size = 20, totalElements = 50, totalPages = 3 }
@@ -150,7 +80,7 @@ createBody =
     "{\"_embedded\":{\"items\":[{\"id\":\"ddc56cf6-1736-4f8d-bfb0-8330cd3d3654\",\"name\":\"TestItem1\",\"description\":\"Description for first item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/ddc56cf6-1736-4f8d-bfb0-8330cd3d3654\"}}},{\"id\":\"dacf77b6-5e70-439a-8e3b-d2da974d73ff\",\"name\":\"TestItem2\",\"description\":\"Description for second item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/dacf77b6-5e70-439a-8e3b-d2da974d73ff\"}}},{\"id\":\"21fb97c7-53d4-4395-bc1e-d3e085f396a2\",\"name\":\"TestItem3\",\"description\":\"Description for 3. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/21fb97c7-53d4-4395-bc1e-d3e085f396a2\"}}},{\"id\":\"8146f000-ff27-40ed-865c-f58889a0f997\",\"name\":\"TestItem4\",\"description\":\"Description for 4. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/8146f000-ff27-40ed-865c-f58889a0f997\"}}},{\"id\":\"107d3693-0733-409c-9617-f50798cb4c4e\",\"name\":\"TestItem5\",\"description\":\"Description for 5. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/107d3693-0733-409c-9617-f50798cb4c4e\"}}},{\"id\":\"80e85bb1-0647-4445-b586-01900c0d5b34\",\"name\":\"TestItem6\",\"description\":\"Description for 6. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/80e85bb1-0647-4445-b586-01900c0d5b34\"}}},{\"id\":\"6406e01b-d5c8-4c40-b551-cf49b3379599\",\"name\":\"TestItem7\",\"description\":\"Description for 7. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/6406e01b-d5c8-4c40-b551-cf49b3379599\"}}},{\"id\":\"b8c05299-2f0e-4acb-b6d3-27494fb4f404\",\"name\":\"TestItem8\",\"description\":\"Description for 8. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/b8c05299-2f0e-4acb-b6d3-27494fb4f404\"}}},{\"id\":\"54f3cc02-a7fd-4ca7-b732-e1f3e27c3984\",\"name\":\"TestItem9\",\"description\":\"Description for 9. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/54f3cc02-a7fd-4ca7-b732-e1f3e27c3984\"}}},{\"id\":\"4b66ed66-4610-4454-af38-a15bdd5c5844\",\"name\":\"TestItem10\",\"description\":\"Description for 10. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/4b66ed66-4610-4454-af38-a15bdd5c5844\"}}},{\"id\":\"461cfa07-f2c4-4d1e-ada9-5c592b461d17\",\"name\":\"TestItem11\",\"description\":\"Description for 11. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/461cfa07-f2c4-4d1e-ada9-5c592b461d17\"}}},{\"id\":\"00fadde0-8b5f-49d3-b6fd-d0f44cf065ed\",\"name\":\"TestItem12\",\"description\":\"Description for 12. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/00fadde0-8b5f-49d3-b6fd-d0f44cf065ed\"}}},{\"id\":\"de718ba8-520c-4199-a819-1674e5582bbe\",\"name\":\"TestItem13\",\"description\":\"Description for 13. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/de718ba8-520c-4199-a819-1674e5582bbe\"}}},{\"id\":\"b1e701fe-7188-47d2-8654-7808ced2f6a7\",\"name\":\"TestItem14\",\"description\":\"Description for 14. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/b1e701fe-7188-47d2-8654-7808ced2f6a7\"}}},{\"id\":\"86aa8336-6bd0-440a-97fe-b51e1b9f6f9e\",\"name\":\"TestItem15\",\"description\":\"Description for 15. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/86aa8336-6bd0-440a-97fe-b51e1b9f6f9e\"}}},{\"id\":\"6d952799-5601-432a-9947-adad57bb54db\",\"name\":\"TestItem16\",\"description\":\"Description for 16. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/6d952799-5601-432a-9947-adad57bb54db\"}}},{\"id\":\"365aefff-1fb6-4b3e-84a9-18b1a256b76b\",\"name\":\"TestItem17\",\"description\":\"Description for 17. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/365aefff-1fb6-4b3e-84a9-18b1a256b76b\"}}},{\"id\":\"0353f12a-6100-49c4-9c13-262c6efe5019\",\"name\":\"TestItem18\",\"description\":\"Description for 18. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/0353f12a-6100-49c4-9c13-262c6efe5019\"}}},{\"id\":\"00a9d79c-8642-4f3c-992c-5feff24da334\",\"name\":\"TestItem19\",\"description\":\"Description for 19. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/00a9d79c-8642-4f3c-992c-5feff24da334\"}}},{\"id\":\"76cdfb25-3fd2-4f48-b16e-539968d22bba\",\"name\":\"TestItem20\",\"description\":\"Description for 20. item\",\"_links\":{\"self\":{\"href\":\"http://localhost:8080/api/items/76cdfb25-3fd2-4f48-b16e-539968d22bba\"}}}]},\"_links\":{\"first\":{\"href\":\"http://localhost:8080/api/items?page=0&size=20\"},\"self\":{\"href\":\"http://localhost:8080/api/items?page=0&size=20\"},\"next\":{\"href\":\"http://localhost:8080/api/items?page=1&size=20\"},\"last\":{\"href\":\"http://localhost:8080/api/items?page=2&size=20\"}},\"page\":{\"size\":20,\"totalElements\":50,\"totalPages\":3,\"number\":0}}"
 
 
-createExpectedResult : Result Decode.Error ItemsResponse
+createExpectedResult : Result Decode.Error ItemsHttpClient.ItemsResponse
 createExpectedResult =
     Result.Ok { body = { items = [{ description = "Description for first item", id = ItemId "ddc56cf6-1736-4f8d-bfb0-8330cd3d3654", name = "TestItem1" },{ description = "Description for second item", id = ItemId "dacf77b6-5e70-439a-8e3b-d2da974d73ff", name = "TestItem2" },{ description = "Description for 3. item", id = ItemId "21fb97c7-53d4-4395-bc1e-d3e085f396a2", name = "TestItem3" },{ description = "Description for 4. item", id = ItemId "8146f000-ff27-40ed-865c-f58889a0f997", name = "TestItem4" },{ description = "Description for 5. item", id = ItemId "107d3693-0733-409c-9617-f50798cb4c4e", name = "TestItem5" },{ description = "Description for 6. item", id = ItemId "80e85bb1-0647-4445-b586-01900c0d5b34", name = "TestItem6" },{ description = "Description for 7. item", id = ItemId "6406e01b-d5c8-4c40-b551-cf49b3379599", name = "TestItem7" },{ description = "Description for 8. item", id = ItemId "b8c05299-2f0e-4acb-b6d3-27494fb4f404", name = "TestItem8" },{ description = "Description for 9. item", id = ItemId "54f3cc02-a7fd-4ca7-b732-e1f3e27c3984", name = "TestItem9" },{ description = "Description for 10. item", id = ItemId "4b66ed66-4610-4454-af38-a15bdd5c5844", name = "TestItem10" },{ description = "Description for 11. item", id = ItemId "461cfa07-f2c4-4d1e-ada9-5c592b461d17", name = "TestItem11" },{ description = "Description for 12. item", id = ItemId "00fadde0-8b5f-49d3-b6fd-d0f44cf065ed", name = "TestItem12" },{ description = "Description for 13. item", id = ItemId "de718ba8-520c-4199-a819-1674e5582bbe", name = "TestItem13" },{ description = "Description for 14. item", id = ItemId "b1e701fe-7188-47d2-8654-7808ced2f6a7", name = "TestItem14" },{ description = "Description for 15. item", id = ItemId "86aa8336-6bd0-440a-97fe-b51e1b9f6f9e", name = "TestItem15" },{ description = "Description for 16. item", id = ItemId "6d952799-5601-432a-9947-adad57bb54db", name = "TestItem16" },{ description = "Description for 17. item", id = ItemId "365aefff-1fb6-4b3e-84a9-18b1a256b76b", name = "TestItem17" },{ description = "Description for 18. item", id = ItemId "0353f12a-6100-49c4-9c13-262c6efe5019", name = "TestItem18" },{ description = "Description for 19. item", id = ItemId "00a9d79c-8642-4f3c-992c-5feff24da334", name = "TestItem19" },{ description = "Description for 20. item", id = ItemId "76cdfb25-3fd2-4f48-b16e-539968d22bba", name = "TestItem20" }]
                        , page = { number = 0, size = 20, totalElements = 50, totalPages = 3 }
@@ -158,7 +88,7 @@ createExpectedResult =
               , etag = Just "\"dc8b09bc90ed194d61b3111aa371e9dc\""
               }
 
-itemsResponseFromResult : (Result Decode.Error ItemsResponse) -> ItemsResponse
+itemsResponseFromResult : (Result Decode.Error ItemsHttpClient.ItemsResponse) -> ItemsHttpClient.ItemsResponse
 itemsResponseFromResult result =
     case result of
         Result.Ok value -> value
@@ -168,6 +98,6 @@ itemsResponseFromResult result =
              , etag = Nothing
              }
 
-createExpectedMsg : Msg
+createExpectedMsg : ListItems.Msg
 createExpectedMsg =
     ItemsReceived (RemoteData.Success (itemsResponseFromResult createExpectedResult))
