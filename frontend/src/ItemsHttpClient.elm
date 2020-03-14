@@ -27,9 +27,9 @@ type ItemsApiResponses
     | CustomError String
 
 
-type FetchingResults
+type FetchingResults fetchingType
     = FetchError String
-    | ItemsReceived (WebData ItemsResponse)
+    | ItemsReceived (WebData fetchingType)
     | ItemsNotModified
 
 

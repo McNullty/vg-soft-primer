@@ -1,4 +1,4 @@
-module Pages.Items.ListItems exposing (Model, Msg(..), init, update, view, pagingData, convertToMsg)
+module Pages.Items.ListItems exposing (Model, Msg(..), convertToMsg, init, pagingData, update, view)
 
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button exposing (button, onClick)
@@ -39,7 +39,7 @@ type Msg
 
 init : Int -> ( Model, Cmd Msg )
 init pageNumber =
-    ( initialModel pageNumber, fetchItems pageNumber Nothing convertToMsg)
+    ( initialModel pageNumber, fetchItems pageNumber Nothing convertToMsg )
 
 
 initialModel : Int -> Model
@@ -62,7 +62,7 @@ deleteItem itemId =
     Http.request
         { method = "DELETE"
         , headers = []
-        , url = "/api/items/" ++ (idToString itemId)
+        , url = "/api/items/" ++ idToString itemId
         , body = Http.emptyBody
         , expect = Http.expectString ItemDeleted
         , timeout = Nothing
@@ -73,7 +73,8 @@ deleteItem itemId =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
-        _ = Debug.log "ListItems Msg" msg
+        _ =
+            Debug.log "ListItems Msg" msg
     in
     case msg of
         FetchItems ->
@@ -82,44 +83,57 @@ update msg model =
         ResponseReceived results ->
             case results of
                 FetchError error ->
-                    ( { model | errorMessage = Just  error }
+                    ( { model | errorMessage = Just error }
                     , Cmd.none
                     )
-
 
                 ItemsReceived webData ->
                     let
                         numberOfItems =
                             case webData of
-                                Success res -> length res.body.items
-                                _ -> 0
+                                Success res ->
+                                    length res.body.items
+
+                                _ ->
+                                    0
 
                         etag =
                             case webData of
-                                Success res -> res.etag
-                                _ -> Nothing
+                                Success res ->
+                                    res.etag
 
-                        _ = Debug.log "Got items" numberOfItems
+                                _ ->
+                                    Nothing
+
+                        _ =
+                            Debug.log "Got items" numberOfItems
                     in
                     case numberOfItems of
-                        0 -> ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) model.etag convertToMsg )
-                        _ -> ( { model | itemsResponse = webData, etag = etag, cachedItemsResponse = Just webData }, Cmd.none )
+                        0 ->
+                            ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) model.etag convertToMsg )
 
+                        _ ->
+                            ( { model | itemsResponse = webData, etag = etag, cachedItemsResponse = Just webData }, Cmd.none )
 
                 ItemsNotModified ->
                     let
                         cachedItemsResponse =
                             case model.cachedItemsResponse of
-                                Just itemResponse -> itemResponse
-                                Nothing -> RemoteData.Loading
+                                Just itemResponse ->
+                                    itemResponse
+
+                                Nothing ->
+                                    RemoteData.Loading
 
                         error =
                             case model.cachedItemsResponse of
-                                Just _ -> Nothing
-                                Nothing -> Just "Not found anything in cache"
-                    in
-                    (  { model | itemsResponse = cachedItemsResponse, errorMessage = error}, Cmd.none)
+                                Just _ ->
+                                    Nothing
 
+                                Nothing ->
+                                    Just "Not found anything in cache"
+                    in
+                    ( { model | itemsResponse = cachedItemsResponse, errorMessage = error }, Cmd.none )
 
         DeleteItem itemId ->
             ( model, deleteItem itemId )
@@ -133,7 +147,8 @@ update msg model =
             )
 
         Pagination page ->
-            ( {model | activePage = page }, Cmd.none)
+            ( { model | activePage = page }, Cmd.none )
+
 
 
 --    __      _______ ________          __
@@ -150,13 +165,13 @@ view model =
     Grid.container []
         [ Grid.row []
             [ Grid.col [ Col.md6, Col.offsetMd3 ]
-                [ h1 [ class "text-center" ] [ text "Items view" ]]
+                [ h1 [ class "text-center" ] [ text "Items view" ] ]
             ]
         , Grid.row []
             [ Grid.col [ Col.md6, Col.offsetMd3 ]
-                [ button [ onClick FetchItems, Button.large, Button.primary, Button.attrs [ Spacing.m1 ]]
+                [ button [ onClick FetchItems, Button.large, Button.primary, Button.attrs [ Spacing.m1 ] ]
                     [ text "Refresh items" ]
-                , Alert.link [href "/items-new"] [text "Create new Item"]
+                , Alert.link [ href "/items-new" ] [ text "Create new Item" ]
                 ]
             ]
         , Grid.row []
@@ -178,7 +193,7 @@ viewItemsOrError model =
 
         RemoteData.Loading ->
             div []
-                [ Spinner.spinner [ Spinner.large ] [ span [ class "sr-only"]  [ text "Loading..."] ] ]
+                [ Spinner.spinner [ Spinner.large ] [ span [ class "sr-only" ] [ text "Loading..." ] ] ]
 
         RemoteData.Success itemsResponse ->
             viewItems itemsResponse
@@ -195,10 +210,11 @@ viewItems itemsResponse =
                 [ Table.th [] [ text "Name" ]
                 , Table.th [] [ text "Description" ]
                 ]
-                , Table.tbody []
-                    (List.map viewItem itemsResponse.body.items)
+            , Table.tbody []
+                (List.map viewItem itemsResponse.body.items)
             )
         ]
+
 
 viewItem : Item -> Row Msg
 viewItem item =
@@ -208,11 +224,10 @@ viewItem item =
         , Table.td []
             [ text item.description ]
         , Table.td []
-            [ Alert.link [href ("/items/" ++ (Item.idToString item.id))] [text "Edit"]]
+            [ Alert.link [ href ("/items/" ++ Item.idToString item.id) ] [ text "Edit" ] ]
         , Table.td []
-            [ button [onClick (DeleteItem item.id), Button.large, Button.primary ] [text "Delete"]]
+            [ button [ onClick (DeleteItem item.id), Button.large, Button.primary ] [ text "Delete" ] ]
         ]
-
 
 
 simplePaginationList : Model -> Html Msg
@@ -232,6 +247,7 @@ simplePaginationList model =
             }
         |> Pagination.view
 
+
 pagingDataFromModel : Model -> List Int
 pagingDataFromModel model =
     case model.itemsResponse of
@@ -241,7 +257,7 @@ pagingDataFromModel model =
         _ ->
             []
 
+
 pagingData : Int -> List Int
 pagingData numberOfPages =
     range 1 numberOfPages
-
