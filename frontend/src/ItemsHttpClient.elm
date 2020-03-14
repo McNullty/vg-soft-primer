@@ -78,8 +78,8 @@ processMetadataAndBody metadata body =
 
     This function will take results form parser and create application message depending on result
 -}
-customMessageFromResult : (FetchingResults -> a) -> (Result Decode.Error ItemsApiResponses -> a)
-customMessageFromResult converter result =
+customResultToMessage : (FetchingResults -> a) -> (Result Decode.Error ItemsApiResponses -> a)
+customResultToMessage converter result =
     let
         fetchingResults =
             case result of
@@ -137,7 +137,7 @@ customResponseToResult response =
 
 customExpectFunction : (FetchingResults -> a) -> Http.Expect a
 customExpectFunction converter =
-        expectStringResponse (customMessageFromResult converter) customResponseToResult
+        expectStringResponse (customResultToMessage converter) customResponseToResult
 
 
 fetchItems : Int -> Maybe String -> (FetchingResults -> a) -> Cmd a

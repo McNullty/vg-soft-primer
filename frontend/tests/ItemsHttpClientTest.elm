@@ -45,9 +45,11 @@ suite =
                         metadata = createMetadata
                         body = createBody
 
-                        -- TODO: make call chain more readable
-                        result = ItemsHttpClient.customMessageFromResult
-                            convertToMsg (ItemsHttpClient.customResponseToResult (GoodStatus_ metadata body))
+
+                        result =
+                            GoodStatus_ metadata body
+                                |> ItemsHttpClient.customResponseToResult
+                                |> ItemsHttpClient.customResultToMessage convertToMsg
 
                         expected = createExpectedMsg
                     in
@@ -102,5 +104,7 @@ itemsResponseFromResult result =
 
 createExpectedMsg : ListItems.Msg
 createExpectedMsg =
-    -- TODO: make call chain more readable
-    ResponseReceived (ItemsReceived (RemoteData.Success (itemsResponseFromResult createExpectedResult)))
+    itemsResponseFromResult createExpectedResult
+        |> RemoteData.Success
+        |> ItemsReceived
+        |> ResponseReceived
