@@ -31,7 +31,7 @@ type alias Model =
 
 type Msg
     = FetchItems
-    | ResponseReceived FetchingResults
+    | ResponseReceived (FetchingResults ItemsResponse)
     | DeleteItem ItemId
     | ItemDeleted (Result Http.Error String)
     | Pagination Int
@@ -52,7 +52,7 @@ initialModel pageNumber =
     }
 
 
-convertToMsg : FetchingResults -> Msg
+convertToMsg : FetchingResults ItemsResponse -> Msg
 convertToMsg result =
     ResponseReceived result
 

@@ -21,8 +21,8 @@ type alias ItemsResponse =
     }
 
 
-type ItemsApiResponses
-    = Success ItemsResponse
+type ApiResponses responseType
+    = Success responseType
     | NotModified
     | CustomError String
 
@@ -59,8 +59,8 @@ getEtagFromHeader headers =
     This function uses header metadata and body from response to create ItemsResponse type
 
 -}
-processMetadataAndBody : Metadata -> String -> Result Decode.Error ItemsResponse
-processMetadataAndBody metadata body =
+itemsResponseProcessor : Metadata -> String -> Result Decode.Error ItemsResponse
+itemsResponseProcessor metadata body =
     let
         etagResult =
             getEtagFromHeader metadata.headers
@@ -87,7 +87,7 @@ processMetadataAndBody metadata body =
     This function will take results form parser and create application message depending on result
 
 -}
-customResultToMessage : (FetchingResults -> a) -> (Result Decode.Error ItemsApiResponses -> a)
+customResultToMessage : (FetchingResults x -> a) -> (Result Decode.Error (ApiResponses x) -> a)
 customResultToMessage converter result =
     let
         fetchingResults =
@@ -118,8 +118,8 @@ customResultToMessage converter result =
 -}
 customResponseToResult :
     Response String
-    -> (Metadata -> String -> Result Decode.Error ItemsResponse)
-    -> Result Decode.Error ItemsApiResponses
+    -> (Metadata -> String -> Result Decode.Error x)
+    -> Result Decode.Error (ApiResponses x)
 customResponseToResult response metadataAndBodyProcessor =
     let
         _ =
@@ -175,19 +175,23 @@ customResponseToResult response metadataAndBodyProcessor =
 
 
 customExpectFunction :
-    (FetchingResults -> a)
-    -> (Response String -> Result Decode.Error ItemsApiResponses)
+    (FetchingResults x -> a)
+    -> (Response String -> Result Decode.Error (ApiResponses x))
     -> Http.Expect a
 customExpectFunction converter responseToResult =
     expectStringResponse (customResultToMessage converter) responseToResult
 
 
-responseToItemsApiResponse : Response String -> Result Decode.Error ItemsApiResponses
+responseToItemsApiResponse : Response String -> Result Decode.Error (ApiResponses ItemsResponse)
 responseToItemsApiResponse response =
-    customResponseToResult response processMetadataAndBody
+    customResponseToResult response itemsResponseProcessor
 
 
-fetchItems : Int -> Maybe String -> (FetchingResults -> a) -> Cmd a
+----- PUBLIC METHODS ---
+-- Other methods are exposed but only for resting.
+-- TODO: I can refactor non-specific client stuff in separate module
+
+fetchItems : Int -> Maybe String -> (FetchingResults ItemsResponse -> a) -> Cmd a
 fetchItems pageNumber etag convertToMsg =
     Http.request
         { method = "GET"

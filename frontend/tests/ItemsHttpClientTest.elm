@@ -40,7 +40,7 @@ suite =
                             createBody
 
                         result =
-                            ItemsHttpClient.processMetadataAndBody metadata body
+                            ItemsHttpClient.itemsResponseProcessor metadata body
 
                         expected =
                             createExpectedResult
