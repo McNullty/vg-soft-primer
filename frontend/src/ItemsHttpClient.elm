@@ -182,8 +182,8 @@ customExpectFunction converter responseToResult =
     expectStringResponse (customResultToMessage converter) responseToResult
 
 
-responseToItemsApiResponse : Response String -> Result Decode.Error (ApiResponses ItemsResponse)
-responseToItemsApiResponse response =
+responseToItemsResponse : Response String -> Result Decode.Error (ApiResponses ItemsResponse)
+responseToItemsResponse response =
     customResponseToResult response itemsResponseProcessor
 
 
@@ -204,7 +204,7 @@ fetchItems pageNumber etag convertToMsg =
                     []
         , url = "/api/items?page=" ++ String.fromInt pageNumber
         , body = Http.emptyBody
-        , expect = customExpectFunction convertToMsg responseToItemsApiResponse
+        , expect = customExpectFunction convertToMsg responseToItemsResponse
         , timeout = Nothing
         , tracker = Nothing
         }

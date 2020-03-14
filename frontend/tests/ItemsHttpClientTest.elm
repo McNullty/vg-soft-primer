@@ -59,7 +59,7 @@ suite =
 
                         result =
                             GoodStatus_ metadata body
-                                |> ItemsHttpClient.responseToItemsApiResponse
+                                |> ItemsHttpClient.responseToItemsResponse
                                 |> ItemsHttpClient.customResultToMessage convertToMsg
 
                         expected =
