@@ -1,4 +1,4 @@
-module Pages.Items.EditItem exposing (Model, Msg, init, update, view)
+module Pages.Items.EditItem exposing (Model, Msg(..), init, update, view)
 
 import Bootstrap.Button as Button exposing (button, onClick)
 import Bootstrap.Form as Form
@@ -10,6 +10,7 @@ import Error exposing (buildErrorMessage, viewError)
 import Html exposing (Html, div, h1, h3, text)
 import Html.Attributes exposing (class, for)
 import Http
+import ItemsHttpClient exposing (FetchingResults(..), ItemResponse, fetchItem)
 import Json.Encode as Encode
 import Pages.Items.Item as Item exposing (Item, ItemModel)
 import RemoteData exposing (WebData)
@@ -17,16 +18,17 @@ import Route
 
 type alias Model =
     { navKey : Nav.Key
-    , item : WebData Item.Item
+    , item : WebData Item
     , activeItemsPage: Int
-    , saveError : Maybe String
+    , errorMessage : Maybe String
+    , etag : Maybe String
     }
 
 
 type Msg
     = StoreName String
+    | ResponseReceived (FetchingResults ItemResponse)
     | StoreDescription String
-    | ItemReceived (WebData Item.Item)
     | UpdateItem
     | ItemUpdated (Result Http.Error String)
     | CancelUpdate
@@ -34,40 +36,59 @@ type Msg
 
 init : Item.ItemId -> Nav.Key -> Int -> ( Model, Cmd Msg )
 init itemId navKey activePage =
-    ( initialModel navKey activePage, fetchItem itemId )
+    ( initialModel navKey activePage, fetchItem itemId Nothing convertToMsg )
 
 
 initialModel : Nav.Key -> Int -> Model
 initialModel navKey activePage =
     { navKey = navKey
     , item = RemoteData.Loading
-    , saveError = Nothing
     , activeItemsPage = activePage
+    , errorMessage = Nothing
+    , etag = Nothing
     }
 
-fetchItem : Item.ItemId -> Cmd Msg
-fetchItem itemId =
-    Http.get
-        { url = "/api/items/" ++ (Item.idToString itemId)
-        , expect =
-            Item.itemDecoder
-                |> Http.expectJson (RemoteData.fromResult >> ItemReceived)
-        }
 
+convertToMsg : FetchingResults ItemResponse -> Msg
+convertToMsg result =
+    ResponseReceived result
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ItemReceived item ->
-            ( {model | item =  item}, Cmd.none)
+        ResponseReceived result ->
+            case result of
+                FetchError error ->
+                    ( { model | errorMessage = Just error }
+                    , Cmd.none
+                    )
+
+                DataReceived webData ->
+                    let
+                        item = case webData of
+                            RemoteData.Success receivedItem ->
+                                RemoteData.Success receivedItem.item
+                            _ -> RemoteData.Loading
+
+
+                        etag = case webData of
+                            RemoteData.Success receivedItem ->
+                                receivedItem.etag
+                            _ -> Nothing
+
+                    in
+                    ( {model | item = item, etag = etag}, Cmd.none)
+
+                DataNotModified ->
+                     ( model, Cmd.none)
+
 
         StoreName name ->
             let
                 updateName =
                     RemoteData.map
-                        (\itemData ->
-                            { itemData | name = name }
+                        (\itemData -> { itemData | name = name }
                         )
                         model.item
             in
@@ -89,12 +110,12 @@ update msg model =
             ( model, updateItem model.item )
 
         ItemUpdated (Ok _) ->
-            ( {model | saveError = Nothing }
+            ( {model | errorMessage = Nothing }
             , Route.pushUrl (Route.Items (Just model.activeItemsPage)) model.navKey
             )
 
         ItemUpdated (Err error) ->
-            ( { model | saveError = Just (buildErrorMessage error) }
+            ( { model | errorMessage = Just (buildErrorMessage error) }
             , Cmd.none
             )
 
@@ -144,7 +165,7 @@ view model =
     div []
         [ h1 [ class "text-center" ] [ text "Edit Item" ]
         , viewItem model.item
-        , viewSaveError model.saveError
+        , viewSaveError model.errorMessage
         ]
 
 

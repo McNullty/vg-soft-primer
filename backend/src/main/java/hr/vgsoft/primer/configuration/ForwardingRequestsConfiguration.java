@@ -13,12 +13,14 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 
 @Slf4j
 @Configuration
-public class MyWebConfig implements WebMvcConfigurer {
+public class ForwardingRequestsConfiguration implements WebMvcConfigurer {
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     registry.addResourceHandler("/**/*")
             .addResourceLocations("classpath:/public/")
+            // TODO: Enable this in production, maybe make separate configuration for prod environment
+            .setCachePeriod(31556926)
             .resourceChain(true)
             .addResolver(new PathResourceResolver() {
               @Override
