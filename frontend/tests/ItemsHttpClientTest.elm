@@ -135,5 +135,5 @@ createExpectedMsg : ListItems.Msg
 createExpectedMsg =
     itemsResponseFromResult createExpectedResult
         |> RemoteData.Success
-        |> ItemsReceived
+        |> DataReceived
         |> ResponseReceived

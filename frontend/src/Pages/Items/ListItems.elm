@@ -87,51 +87,41 @@ update msg model =
                     , Cmd.none
                     )
 
-                ItemsReceived webData ->
+                DataReceived webData ->
                     let
+
                         numberOfItems =
                             case webData of
-                                Success res ->
-                                    length res.body.items
+                                Success res -> length res.body.items
 
-                                _ ->
-                                    0
+                                _ -> 0
 
                         etag =
                             case webData of
-                                Success res ->
-                                    res.etag
+                                Success res -> res.etag
 
-                                _ ->
-                                    Nothing
+                                _ -> Nothing
 
-                        _ =
-                            Debug.log "Got items" numberOfItems
+                        _ = Debug.log "Got items" numberOfItems
                     in
                     case numberOfItems of
-                        0 ->
-                            ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) model.etag convertToMsg )
+                        0 -> ( { model | itemsResponse = RemoteData.Loading }, fetchItems (model.activePage - 1) model.etag convertToMsg )
 
-                        _ ->
-                            ( { model | itemsResponse = webData, etag = etag, cachedItemsResponse = Just webData }, Cmd.none )
+                        _ -> ( { model | itemsResponse = webData, etag = etag, cachedItemsResponse = Just webData }, Cmd.none )
 
-                ItemsNotModified ->
+                DataNotModified ->
                     let
                         cachedItemsResponse =
                             case model.cachedItemsResponse of
-                                Just itemResponse ->
-                                    itemResponse
+                                Just itemResponse -> itemResponse
 
-                                Nothing ->
-                                    RemoteData.Loading
+                                Nothing -> RemoteData.Loading
 
                         error =
                             case model.cachedItemsResponse of
-                                Just _ ->
-                                    Nothing
+                                Just _ -> Nothing
 
-                                Nothing ->
-                                    Just "Not found anything in cache"
+                                Nothing -> Just "Not found anything in cache"
                     in
                     ( { model | itemsResponse = cachedItemsResponse, errorMessage = error }, Cmd.none )
 
@@ -254,8 +244,7 @@ pagingDataFromModel model =
         RemoteData.Success itemsResponse ->
             pagingData itemsResponse.body.page.totalPages
 
-        _ ->
-            []
+        _ -> []
 
 
 pagingData : Int -> List Int

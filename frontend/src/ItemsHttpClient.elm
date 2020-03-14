@@ -5,7 +5,7 @@ import Dict exposing (Dict)
 import Http exposing (Metadata, Response(..), expectStringResponse)
 import Json.Decode as Decode exposing (Error(..))
 import Json.Decode.Pipeline as Pipeline
-import Pages.Items.Item exposing (Item, ItemId(..), itemDecoder)
+import Pages.Items.Item as Item exposing (Item, ItemId(..), itemDecoder)
 import RemoteData exposing (WebData)
 
 
@@ -20,6 +20,10 @@ type alias ItemsResponse =
     , etag : Maybe String
     }
 
+type alias ItemResponse =
+    { item : Item
+    , etag : Maybe String
+    }
 
 type ApiResponses responseType
     = Success responseType
@@ -29,8 +33,8 @@ type ApiResponses responseType
 
 type FetchingResults fetchingType
     = FetchError String
-    | ItemsReceived (WebData fetchingType)
-    | ItemsNotModified
+    | DataReceived (WebData fetchingType)
+    | DataNotModified
 
 
 pageDecoder : Decode.Decoder PagingData
@@ -81,6 +85,27 @@ itemsResponseProcessor metadata body =
     in
     response
 
+itemResponseProcessor : Metadata -> String -> Result Decode.Error ItemResponse
+itemResponseProcessor metadata body =
+    let
+            etagResult =
+                getEtagFromHeader metadata.headers
+
+            bodyResult =
+                Decode.decodeString itemDecoder body
+
+            response =
+                case bodyResult of
+                    Result.Ok value ->
+                        Result.Ok
+                            { item = value
+                            , etag = etagResult
+                            }
+
+                    Result.Err err ->
+                        Result.Err err
+        in
+        response
 
 {-| This function takes parsed result that was already put in type and creates appropriate application message
 
@@ -95,10 +120,10 @@ customResultToMessage converter result =
                 Result.Ok value ->
                     case value of
                         Success itemResponse ->
-                            ItemsReceived (RemoteData.Success itemResponse)
+                            DataReceived (RemoteData.Success itemResponse)
 
                         NotModified ->
-                            ItemsNotModified
+                            DataNotModified
 
                         CustomError errorMessage ->
                             FetchError errorMessage
@@ -186,6 +211,9 @@ responseToItemsResponse : Response String -> Result Decode.Error (ApiResponses I
 responseToItemsResponse response =
     customResponseToResult response itemsResponseProcessor
 
+responseToItem : Response String -> Result Decode.Error (ApiResponses ItemResponse)
+responseToItem response =
+    customResponseToResult response itemResponseProcessor
 
 ----- PUBLIC METHODS ---
 -- Other methods are exposed but only for resting.
@@ -205,6 +233,25 @@ fetchItems pageNumber etag convertToMsg =
         , url = "/api/items?page=" ++ String.fromInt pageNumber
         , body = Http.emptyBody
         , expect = customExpectFunction convertToMsg responseToItemsResponse
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+fetchItem : Item.ItemId -> Maybe String -> (FetchingResults ItemResponse -> a) -> Cmd a
+fetchItem itemId etag convertToMsg =
+    Http.request
+        { method = "GET"
+        , url = "/api/items/" ++ (Item.idToString itemId)
+        , headers =
+            case etag of
+                Just tag ->
+                    [ Http.header "If-None-Match" tag ]
+
+                Nothing ->
+                    []
+        , body = Http.emptyBody
+        , expect = customExpectFunction convertToMsg responseToItem
         , timeout = Nothing
         , tracker = Nothing
         }
