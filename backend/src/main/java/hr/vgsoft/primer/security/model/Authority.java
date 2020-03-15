@@ -9,16 +9,11 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@NoArgsConstructor
-@Setter(value = AccessLevel.PACKAGE)
+@Builder
 @Data
-@Getter
 @Entity
 @Table(name = "authorities")
 public class Authority implements Serializable {

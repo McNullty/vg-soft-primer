@@ -21,10 +21,9 @@ import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -34,9 +33,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.Assert;
 
-@NoArgsConstructor
-@Setter(value = AccessLevel.PACKAGE)
-@Getter
+@Builder
 @DynamicUpdate
 @Data
 @EqualsAndHashCode(exclude = {"authorities"})
@@ -184,4 +181,33 @@ public class User implements UserDetails {
     authorities.remove(authority);
   }
 
+
+  public static class UserBuilder {
+
+    /**
+     * preventing direct access.
+     *
+     * @param authorities Set of authorities
+     * @return User Builder
+     */
+    private UserBuilder authorities(Set<Authority> authorities) {
+      return this;
+    }
+
+    /**
+     * Adding name to set of authorities.
+     *
+     * @param authority name to add to set
+     * @return builder
+     */
+    public UserBuilder addAuthority(final Authority authority) {
+      if (this.authorities == null) {
+        this.authorities = new HashSet<>();
+      }
+
+      this.authorities.add(authority);
+
+      return this;
+    }
+  }
 }
