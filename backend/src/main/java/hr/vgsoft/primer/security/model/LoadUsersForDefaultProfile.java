@@ -67,6 +67,7 @@ public class LoadUsersForDefaultProfile implements ApplicationListener<ContextRe
             .addAuthority(user)
             .build();
     una.enable();
+    una.unlock();
 
     User unaSaved = userRepository.save(una);
     users.put("una@test.com", unaSaved);
@@ -81,6 +82,7 @@ public class LoadUsersForDefaultProfile implements ApplicationListener<ContextRe
             .addAuthority(user)
             .build();
     theon.enable();
+    theon.unlock();
 
     User theonSaved = userRepository.save(theon);
     users.put("theon@test.com", theonSaved);
@@ -93,6 +95,7 @@ public class LoadUsersForDefaultProfile implements ApplicationListener<ContextRe
             .addAuthority(user)
             .build();
     frank.enable();
+    frank.unlock();
 
     User frankSaved = userRepository.save(frank);
     users.put("frank@test.com", frankSaved);
@@ -106,9 +109,10 @@ public class LoadUsersForDefaultProfile implements ApplicationListener<ContextRe
             .addAuthority(user)
             .build();
     luka.enable();
+    luka.lock();
 
     User lukaSaved = userRepository.save(luka);
-    users.put("frank@test.com", lukaSaved);
+    users.put("luka@test.com", lukaSaved);
 
     logSavedUser(theonSaved);
 
@@ -120,6 +124,7 @@ public class LoadUsersForDefaultProfile implements ApplicationListener<ContextRe
             .addAuthority(userManager)
             .build();
     mark.enable();
+    mark.unlock();
 
     User markSaved = userRepository.save(mark);
     users.put("mark@test.com", markSaved);
@@ -134,6 +139,7 @@ public class LoadUsersForDefaultProfile implements ApplicationListener<ContextRe
             .addAuthority(admin)
             .build();
     andrew.enable();
+    andrew.unlock();
 
     User andrewSaved = userRepository.save(andrew);
     users.put("andrew@test.com", andrewSaved);

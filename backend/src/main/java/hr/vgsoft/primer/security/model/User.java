@@ -21,9 +21,11 @@ import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -34,6 +36,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.Assert;
 
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @DynamicUpdate
 @Data
 @EqualsAndHashCode(exclude = {"authorities"})
@@ -65,10 +69,10 @@ public class User implements UserDetails {
   private String lastName;
 
   @Column(nullable = false)
-  private Boolean enabled = Boolean.FALSE;
+  private Boolean enabled;
 
   @Column(nullable = false)
-  private Boolean locked = Boolean.FALSE;
+  private Boolean locked;
 
   @Setter(AccessLevel.NONE)
   @ManyToMany(fetch = FetchType.LAZY)
