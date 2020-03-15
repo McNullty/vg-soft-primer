@@ -18,16 +18,10 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     http
             .authorizeRequests()
             .antMatchers("/h2-console/**").permitAll()
-            .antMatchers("/register").permitAll()
-            .antMatchers("/confirm-email").permitAll()
-            .antMatchers("/users/**/authorities")
-              .hasAnyRole(
-                      UserAuthorityEnum.ROLE_ADMIN.getShortName())
-            .antMatchers("/users/**/unlock")
-            .hasAnyRole(
-                    UserAuthorityEnum.ROLE_USER_MANAGER.getShortName(),
-                    UserAuthorityEnum.ROLE_ADMIN.getShortName())
-            .antMatchers("/users/**")
+            .antMatchers("/").permitAll()
+            .antMatchers("/index.html").permitAll()
+            .antMatchers("/api/greeting").permitAll()
+            .antMatchers("/api/**")
               .hasAnyRole(
                       UserAuthorityEnum.ROLE_USER.getShortName(),
                       UserAuthorityEnum.ROLE_USER_MANAGER.getShortName(),
