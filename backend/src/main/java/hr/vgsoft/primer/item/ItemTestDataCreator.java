@@ -12,7 +12,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Profile({"default", "test-users"})
+@Profile({"default"})
 @Getter(AccessLevel.PRIVATE)
 @Component
 public class ItemTestDataCreator implements ApplicationListener<ContextRefreshedEvent> {
