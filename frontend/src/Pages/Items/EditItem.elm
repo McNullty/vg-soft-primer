@@ -16,10 +16,11 @@ import Pages.Items.Item as Item exposing (Item, ItemModel)
 import RemoteData exposing (WebData)
 import Route
 
+
 type alias Model =
     { navKey : Nav.Key
     , item : WebData Item
-    , activeItemsPage: Int
+    , activeItemsPage : Int
     , errorMessage : Maybe String
     , etag : Maybe String
     }
@@ -66,30 +67,32 @@ update msg model =
 
                 DataReceived webData ->
                     let
-                        item = case webData of
-                            RemoteData.Success receivedItem ->
-                                RemoteData.Success receivedItem.item
-                            _ -> RemoteData.Loading
+                        item =
+                            case webData of
+                                RemoteData.Success receivedItem ->
+                                    RemoteData.Success receivedItem.item
 
+                                _ ->
+                                    RemoteData.Loading
 
-                        etag = case webData of
-                            RemoteData.Success receivedItem ->
-                                receivedItem.etag
-                            _ -> Nothing
+                        etag =
+                            case webData of
+                                RemoteData.Success receivedItem ->
+                                    receivedItem.etag
 
+                                _ ->
+                                    Nothing
                     in
-                    ( {model | item = item, etag = etag}, Cmd.none)
+                    ( { model | item = item, etag = etag }, Cmd.none )
 
                 DataNotModified ->
-                     ( model, Cmd.none)
-
+                    ( model, Cmd.none )
 
         StoreName name ->
             let
                 updateName =
                     RemoteData.map
-                        (\itemData -> { itemData | name = name }
-                        )
+                        (\itemData -> { itemData | name = name })
                         model.item
             in
             ( { model | item = updateName }, Cmd.none )
@@ -105,12 +108,11 @@ update msg model =
             in
             ( { model | item = updateDescription }, Cmd.none )
 
-
         UpdateItem ->
             ( model, updateItem model.item )
 
         ItemUpdated (Ok _) ->
-            ( {model | errorMessage = Nothing }
+            ( { model | errorMessage = Nothing }
             , Route.pushUrl (Route.Items (Just model.activeItemsPage)) model.navKey
             )
 
@@ -120,7 +122,7 @@ update msg model =
             )
 
         CancelUpdate ->
-            ( model, Route.pushUrl (Route.Items (Just model.activeItemsPage)) model.navKey)
+            ( model, Route.pushUrl (Route.Items (Just model.activeItemsPage)) model.navKey )
 
 
 updateItem : WebData Item -> Cmd Msg
@@ -129,7 +131,7 @@ updateItem item =
         RemoteData.Success itemData ->
             let
                 postUrl =
-                    "/api/items/" ++ (Item.idToString itemData.id)
+                    "/api/items/" ++ Item.idToString itemData.id
             in
             Http.request
                 { method = "PUT"
@@ -152,6 +154,8 @@ itemEncoder item =
         , ( "description", Encode.string item.description )
         ]
 
+
+
 --    __      _______ ________          __
 --    \ \    / /_   _|  ____\ \        / /
 --     \ \  / /  | | | |__   \ \  /\  / /
@@ -160,12 +164,13 @@ itemEncoder item =
 --        \/   |_____|______|   \/  \/
 --
 
+
 view : Model -> Html Msg
 view model =
     div []
         [ h1 [ class "text-center" ] [ text "Edit Item" ]
         , viewItem model.item
-        , viewSaveError model.errorMessage
+        , viewShowError model.errorMessage
         ]
 
 
@@ -185,9 +190,8 @@ viewItem item =
             viewError "Couldn't fetch item at this time." (buildErrorMessage httpError)
 
 
-
-viewSaveError : Maybe String -> Html msg
-viewSaveError maybeError =
+viewShowError : Maybe String -> Html msg
+viewShowError maybeError =
     case maybeError of
         Just error ->
             viewError "Couldn't save item at this time." error
@@ -205,10 +209,10 @@ editItemForm item =
                     [ Form.group []
                         [ Form.label [ for "name" ] [ text "Name" ]
                         , Input.text
-                              [ Input.id "name"
-                              , Input.value item.name
-                              , Input.onInput StoreName
-                              ]
+                            [ Input.id "name"
+                            , Input.value item.name
+                            , Input.onInput StoreName
+                            ]
                         ]
                     , Form.group []
                         [ Form.label [ for "description" ] [ text "Description" ]
@@ -221,9 +225,9 @@ editItemForm item =
                     ]
                 , div []
                     [ button [ onClick UpdateItem, Button.large, Button.primary ]
-                        [text "Submit"]
+                        [ text "Submit" ]
                     , button [ onClick CancelUpdate, Button.large, Button.primary ]
-                        [text "Cancel"]
+                        [ text "Cancel" ]
                     ]
                 ]
             ]

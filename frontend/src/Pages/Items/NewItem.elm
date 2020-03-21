@@ -18,7 +18,7 @@ import Route
 type alias Model =
     { navKey : Nav.Key
     , item : Item.ItemModel
-    , activeItemsPage: Int
+    , activeItemsPage : Int
     , createError : Maybe String
     }
 
@@ -75,12 +75,11 @@ update msg model =
             in
             ( { model | item = updateDescription }, Cmd.none )
 
-
         CreateItem ->
             ( model, createItem model.item )
 
         ItemCreated (Ok _) ->
-            ( {model | createError = Nothing }
+            ( { model | createError = Nothing }
             , Route.pushUrl (Route.Items (Just model.activeItemsPage)) model.navKey
             )
 
@@ -110,6 +109,7 @@ newItemEncoder item =
         ]
 
 
+
 --    __      _______ ________          __
 --    \ \    / /_   _|  ____\ \        / /
 --     \ \  / /  | | | |__   \ \  /\  / /
@@ -124,12 +124,12 @@ view model =
     div []
         [ h1 [ class "text-center" ] [ text "Create New Item" ]
         , newItemForm
-        , viewCreateError model.createError
+        , viewShowError model.createError
         ]
 
 
-viewCreateError : Maybe String -> Html msg
-viewCreateError maybeError =
+viewShowError : Maybe String -> Html msg
+viewShowError maybeError =
     case maybeError of
         Just error ->
             viewError "Couldn't create item at this time." error
@@ -147,9 +147,9 @@ newItemForm =
                     [ Form.group []
                         [ Form.label [ for "name" ] [ text "Name" ]
                         , Input.text
-                              [ Input.id "name"
-                              , Input.onInput StoreName
-                              ]
+                            [ Input.id "name"
+                            , Input.onInput StoreName
+                            ]
                         ]
                     , Form.group []
                         [ Form.label [ for "description" ] [ text "Description" ]
@@ -161,9 +161,9 @@ newItemForm =
                     ]
                 , div []
                     [ button [ onClick CreateItem, Button.large, Button.primary ]
-                        [text "Submit"]
+                        [ text "Submit" ]
                     , button [ onClick CancelSave, Button.large, Button.primary ]
-                        [text "Cancel"]
+                        [ text "Cancel" ]
                     ]
                 ]
             ]
