@@ -14,6 +14,17 @@ type Msg
     = StoreUsername
 
 
+init : Nav.Key -> ( Model, Cmd Msg )
+init navKey =
+    ( initialModel navKey, Cmd.none )
+
+
+initialModel : Nav.Key -> Model
+initialModel navKey =
+    { navKey = navKey
+    }
+
+
 
 --    __      _______ ________          __
 --    \ \    / /_   _|  ____\ \        / /
