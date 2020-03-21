@@ -25,6 +25,11 @@ initialModel navKey =
     }
 
 
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    ( model, Cmd.none )
+
+
 
 --    __      _______ ________          __
 --    \ \    / /_   _|  ____\ \        / /
