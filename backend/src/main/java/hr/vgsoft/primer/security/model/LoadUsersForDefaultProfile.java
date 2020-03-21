@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class LoadUsersForDefaultProfile implements ApplicationListener<ContextRefreshedEvent> {
 
   public static final String PASSWORD = "password";
-  public static final String LAST_NAME = "Calories";
+  public static final String LAST_NAME = "Primer";
   private final AuthorityRepository authorityRepository;
   private final UserRepository userRepository;
 
