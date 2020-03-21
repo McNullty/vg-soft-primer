@@ -45,7 +45,7 @@ First configure plugin in build.gradle.kts and then look for types that will Int
 
 == Default database (H2)
 
-By default embedded H2 database is started and can be accessed at URL http://localhost:8080/h2-console/
+By default embedded H2 database is started and can be accessed at URL https://localhost:8443/h2-console/
 
 JDBC URL: jdbc:h2:mem:testdb
 
