@@ -1,10 +1,11 @@
-module Route exposing (Route(..), parseUrl, routeParser, pushUrl, decode)
+module Route exposing (Route(..), decode, parseUrl, pushUrl, routeParser)
 
 import Browser.Navigation as Nav
 import Pages.Items.Item as Item exposing (ItemId)
 import Url exposing (Url)
 import Url.Parser as UrlParser exposing (..)
 import Url.Parser.Query as Query
+
 
 type Route
     = NotFound
@@ -13,21 +14,25 @@ type Route
     | NewItem
     | Item ItemId
     | About
+    | Login
+
 
 parseUrl : Url -> Route
 parseUrl url =
-        case parse routeParser url of
+    case parse routeParser url of
         Just route ->
             route
 
         Nothing ->
             NotFound
 
+
 routeParser : Parser (Route -> a) a
 routeParser =
     UrlParser.oneOf
         [ UrlParser.map Greeting top
         , UrlParser.map About (s "about")
+        , UrlParser.map Login (s "login")
         , UrlParser.map Items (s "items" <?> Query.int "page")
         , UrlParser.map NewItem (s "items-new")
         , UrlParser.map Item (s "items" </> Item.idParser)
@@ -48,7 +53,8 @@ pushUrl route navKey =
 routeToString : Route -> String
 routeToString route =
     let
-        _ = Debug.log "Route.routeToString" route
+        _ =
+            Debug.log "Route.routeToString" route
     in
     case route of
         NotFound ->
@@ -69,7 +75,10 @@ routeToString route =
             "/items-new"
 
         Item itemId ->
-            "/items/" ++ (Item.idToString itemId)
+            "/items/" ++ Item.idToString itemId
 
         About ->
             "/about"
+
+        Login ->
+            "/login"
