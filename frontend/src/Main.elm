@@ -3,13 +3,14 @@ module Main exposing (..)
 import Bootstrap.Navbar as NavBar
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
-import Pages.Items.EditItem as EditItem
 import Html exposing (Html, div, h1, h3, text)
 import Html.Attributes exposing (href)
+import Pages.Greeting.Greeting as Greeting
+import Pages.Items.EditItem as EditItem
 import Pages.Items.ListItems as Items
 import Pages.Items.NewItem as NewItem
+import Pages.Login.Login as Login
 import Route exposing (Route, decode)
-import Pages.Greeting.Greeting as Greeting
 import Url exposing (Url)
 import Util exposing (getActiveItemsPage)
 
@@ -22,6 +23,7 @@ type alias Model =
     , activeItemsPage : Maybe Int
     }
 
+
 {-| This is Type with all pages. Every new page should be added here.
 -}
 type Page
@@ -31,7 +33,7 @@ type Page
     | ListItemsPage Items.Model
     | NewItemPage NewItem.Model
     | ItemPage EditItem.Model
-
+    | LoginPage Login.Model
 
 
 {-| This is Type with all messages for every page. Every new page message should be added here.
@@ -41,7 +43,8 @@ type Msg
     | ListItemsPageMsg Items.Msg
     | NewItemPageMsg NewItem.Msg
     | ItemPageMsg EditItem.Msg
-    --------------
+    | LoginPageMsg Login.Msg
+      --------------
     | LinkClicked UrlRequest
     | UrlChanged Url
     | NavMsg NavBar.State
@@ -67,12 +70,14 @@ subscriptions model =
         [ NavBar.subscriptions model.navState NavMsg
         ]
 
+
 {-| Main init method that calls init methods of specific views
 -}
 init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url navKey =
     let
-        _ = Debug.log "Test Version" 2
+        _ =
+            Debug.log "Test Version" 3
 
         ( navState, navCmd ) =
             NavBar.initialState NavMsg
@@ -90,8 +95,8 @@ init _ url navKey =
 
 
 {-| Helper function that calls init function for every view. For every new view init method should be added to
- theirs function.
- This function sets model.page to right Page Type.
+theirs function.
+This function sets model.page to right Page Type.
 -}
 initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 initCurrentPage ( model, existingCommands ) =
@@ -112,9 +117,11 @@ initCurrentPage ( model, existingCommands ) =
                     let
                         pageNumber =
                             case page of
-                                Just pageNum -> pageNum
+                                Just pageNum ->
+                                    pageNum
 
-                                Nothing -> 0
+                                Nothing ->
+                                    0
 
                         ( pageModel, pageCommands ) =
                             Items.init pageNumber
@@ -133,28 +140,37 @@ initCurrentPage ( model, existingCommands ) =
                         ( pageModel, pageCommands ) =
                             EditItem.init itemId model.navKey (getActiveItemsPage model.activeItemsPage)
                     in
-                    ( ItemPage pageModel, model.activeItemsPage , Cmd.map ItemPageMsg pageCommands)
+                    ( ItemPage pageModel, model.activeItemsPage, Cmd.map ItemPageMsg pageCommands )
 
                 Route.About ->
                     ( AboutPage, Nothing, Cmd.none )
 
+                Route.Login ->
+                    let
+                        ( pageModel, pageCommands ) =
+                            Login.init model.navKey
+                    in
+                    ( LoginPage pageModel, Nothing, Cmd.map LoginPageMsg pageCommands )
     in
-    ( { model | page = currentPage, activeItemsPage = activeItemsPage}
+    ( { model | page = currentPage, activeItemsPage = activeItemsPage }
     , Cmd.batch [ existingCommands, mappedPageCommands ]
     )
 
 
 {-| This method decodes URL and initializes view depending on URL. This is basically frontend routing.
- This function sets model.page to right Page Type.
+This function sets model.page to right Page Type.
 -}
 urlUpdate : Url -> Model -> ( Model, Cmd Msg )
 urlUpdate url model =
     let
         --TODO: remove logging in production
-        _ = Debug.log "MAIN urlUpdate URL" url
-        _ = Debug.log "MAIN urlUpdate Decoding Url" (decode url)
+        _ =
+            Debug.log "MAIN urlUpdate URL" url
+
+        _ =
+            Debug.log "MAIN urlUpdate Decoding Url" (decode url)
     in
-    case (decode url) of
+    case decode url of
         Nothing ->
             ( { model | page = NotFoundPage }, Cmd.none )
 
@@ -165,55 +181,70 @@ urlUpdate url model =
                         ( pageModel, pageCommands ) =
                             Greeting.init
                     in
-                    ( { model | page = (GreetingPage pageModel) }, Cmd.map GreetingPageMsg pageCommands)
+                    ( { model | page = GreetingPage pageModel }, Cmd.map GreetingPageMsg pageCommands )
 
                 Route.About ->
-                    ( { model | page = AboutPage }, Cmd.none)
+                    ( { model | page = AboutPage }, Cmd.none )
 
                 Route.Items page ->
                     let
                         pageNumber =
                             case page of
-                                Just pageNum -> pageNum
+                                Just pageNum ->
+                                    pageNum
 
-                                Nothing -> 0
+                                Nothing ->
+                                    0
 
                         ( pageModel, pageCommands ) =
                             Items.init pageNumber
 
-                        _ = Debug.log "Items page number: " pageNumber
+                        _ =
+                            Debug.log "Items page number: " pageNumber
                     in
-                    ( { model | page = (ListItemsPage pageModel)
-                              , activeItemsPage = Just pageNumber}
-                    , Cmd.map ListItemsPageMsg pageCommands)
+                    ( { model
+                        | page = ListItemsPage pageModel
+                        , activeItemsPage = Just pageNumber
+                      }
+                    , Cmd.map ListItemsPageMsg pageCommands
+                    )
 
                 Route.NewItem ->
                     let
                         ( pageModel, pageCommands ) =
                             NewItem.init model.navKey (getActiveItemsPage model.activeItemsPage)
                     in
-                    ( { model | page = (NewItemPage pageModel) }, Cmd.map NewItemPageMsg pageCommands )
+                    ( { model | page = NewItemPage pageModel }, Cmd.map NewItemPageMsg pageCommands )
 
                 Route.Item itemId ->
                     let
                         ( pageModel, pageCommands ) =
                             EditItem.init itemId model.navKey (getActiveItemsPage model.activeItemsPage)
                     in
-                    ( { model | page = (ItemPage pageModel) }, Cmd.map ItemPageMsg pageCommands )
+                    ( { model | page = ItemPage pageModel }, Cmd.map ItemPageMsg pageCommands )
+
+                Route.Login ->
+                    let
+                        ( pageModel, pageCommands ) =
+                            Login.init model.navKey
+                    in
+                    ( { model | page = LoginPage pageModel }, Cmd.map LoginPageMsg pageCommands )
 
                 _ ->
-                    (model, Cmd.none)
+                    ( model, Cmd.none )
 
 
 {-| This function handles every change in model and calls appropriate update function of current page.
-
 -}
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         --TODO: remove logging in production
-        _ = Debug.log "MAIN update Msg" msg
-        _ = Debug.log "MAIN update Model" model
+        _ =
+            Debug.log "MAIN update Msg" msg
+
+        _ =
+            Debug.log "MAIN update Model" model
     in
     case ( msg, model.page ) of
         ( LinkClicked urlRequest, _ ) ->
@@ -231,13 +262,12 @@ update msg model =
         ( UrlChanged url, _ ) ->
             urlUpdate url model
 
-        ( NavMsg state, _) ->
+        ( NavMsg state, _ ) ->
             ( { model | navState = state }
             , Cmd.none
             )
 
         ------- Page specific update functions
-
         ( GreetingPageMsg subMsg, GreetingPage pageModel ) ->
             let
                 ( updatedPageModel, updatedCmd ) =
@@ -265,7 +295,7 @@ update msg model =
             , Cmd.map NewItemPageMsg updatedCmd
             )
 
-        ( ItemPageMsg subMsg, ItemPage pageModel) ->
+        ( ItemPageMsg subMsg, ItemPage pageModel ) ->
             let
                 ( updatedPageModel, updatedCmd ) =
                     EditItem.update subMsg pageModel
@@ -274,9 +304,20 @@ update msg model =
             , Cmd.map ItemPageMsg updatedCmd
             )
 
+        ( LoginPageMsg subMsg, LoginPage pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    Login.update subMsg pageModel
+            in
+            ( { model | page = LoginPage updatedPageModel }
+            , Cmd.map LoginPageMsg updatedCmd
+            )
+
         -- This branch handles all combinations of Msg and Page type that are not possible
         ( _, _ ) ->
             ( model, Cmd.none )
+
+
 
 --    __      _______ ________          __
 --    \ \    / /_   _|  ____\ \        / /
@@ -286,15 +327,18 @@ update msg model =
 --        \/   |_____|______|   \/  \/
 --
 
+
 view : Model -> Document Msg
 view model =
     { title = "VG Primer App"
     , body =
         [ div []
             [ menu model
-            , currentView model ]
+            , currentView model
+            ]
         ]
     }
+
 
 menu : Model -> Html Msg
 menu model =
@@ -305,8 +349,10 @@ menu model =
         |> NavBar.items
             [ NavBar.itemLink [ href "/items" ] [ text "Items" ]
             , NavBar.itemLink [ href "/about" ] [ text "About" ]
+            , NavBar.itemLink [ href "/login" ] [ text "Login" ]
             ]
         |> NavBar.view model.navState
+
 
 currentView : Model -> Html Msg
 currentView model =
@@ -333,12 +379,18 @@ currentView model =
             EditItem.view itemsModel
                 |> Html.map ItemPageMsg
 
+        LoginPage loginModel ->
+            Login.view loginModel
+                |> Html.map LoginPageMsg
+
+
 notFoundView : Html msg
 notFoundView =
     h3 [] [ text "Oops! The page you requested was not found!" ]
 
+
 aboutView : Html Msg
-aboutView  =
+aboutView =
     div []
         [ h1 [] [ text "About" ]
         , text "TODO: About VG soft and link to repo"
