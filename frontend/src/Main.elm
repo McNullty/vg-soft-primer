@@ -91,15 +91,15 @@ init _ url navKey =
                 , activeItemsPage = Nothing
                 }
     in
-    initCurrentPage ( model, Cmd.batch [ urlCmd, navCmd ] )
+    initCurrentPage url ( model, Cmd.batch [ urlCmd, navCmd ] )
 
 
 {-| Helper function that calls init function for every view. For every new view init method should be added to
 theirs function.
 This function sets model.page to right Page Type.
 -}
-initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-initCurrentPage ( model, existingCommands ) =
+initCurrentPage : Url -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+initCurrentPage url ( model, existingCommands ) =
     let
         ( currentPage, activeItemsPage, mappedPageCommands ) =
             case model.route of
@@ -148,7 +148,7 @@ initCurrentPage ( model, existingCommands ) =
                 Route.Login ->
                     let
                         ( pageModel, pageCommands ) =
-                            Login.init model.navKey
+                            Login.init model.navKey url
                     in
                     ( LoginPage pageModel, Nothing, Cmd.map LoginPageMsg pageCommands )
     in
@@ -226,7 +226,7 @@ urlUpdate url model =
                 Route.Login ->
                     let
                         ( pageModel, pageCommands ) =
-                            Login.init model.navKey
+                            Login.init model.navKey url
                     in
                     ( { model | page = LoginPage pageModel }, Cmd.map LoginPageMsg pageCommands )
 
