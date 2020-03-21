@@ -165,7 +165,7 @@ view model =
     div []
         [ h1 [ class "text-center" ] [ text "Edit Item" ]
         , viewItem model.item
-        , viewSaveError model.errorMessage
+        , viewShowError model.errorMessage
         ]
 
 
@@ -186,8 +186,8 @@ viewItem item =
 
 
 
-viewSaveError : Maybe String -> Html msg
-viewSaveError maybeError =
+viewShowError : Maybe String -> Html msg
+viewShowError maybeError =
     case maybeError of
         Just error ->
             viewError "Couldn't save item at this time." error
