@@ -1,0 +1,68 @@
+= How to add new page to frontend
+
+== Adding new page
+
+. Add new directory to Pages directory.
+. Create new elm file with name of page.
+. Add Model type alias. Example:
+
+[source,elm]
+----
+type alias Model =
+    { navKey : Nav.Key
+    }
+----
+
+. Add Msg type. Example:
+
+[source,elm]
+----
+type Msg
+    = StoreUsername
+----
+
+. Add init function that initializes view and sends initial message if necessary.
+
+[source,elm]
+----
+init : Nav.Key -> ( Model, Cmd Msg )
+init navKey =
+    ( initialModel navKey, Cmd.none )
+----
+
+. Add update function.
+
+[source,elm]
+----
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    ( model, Cmd.none )
+----
+
+. Add view function.
+
+[source,elm]
+----
+view : Model -> Html Msg
+view model =
+    div []
+        [ h1 [ class "text-center" ] [ text "Sign in" ]
+        ]
+----
+
+
+== Routing to new page
+
+=== In Route.elm
+. Add new type to Route type.
+. Add new branch to routeParser function.
+. Add new branch to routeToString function.
+
+=== In Main.elm
+. Add new page to Page type.
+. Add new Msg from new page to Msg in Main.elm.
+. Add new branch to initCurrentPage that calls init function of new page.
+. Add new branch to urlUpdate, very similar to branch in initCurrentPage
+. Add new branch to update function, you can copy-paste previous branches, they are all similar.
+. Add new link to menu function.
+. Add new branch to currentView function. Calls view function of page.
